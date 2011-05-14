@@ -212,7 +212,8 @@
 	<!-- restriction -->
 	<xsl:template
 		match="*[local-name()='restriction' and namespace-uri()='http://www.w3.org/2001/XMLSchema']">
-		<xsl:if test="@base">
+    <xsl:variable name="targetNamespace" select="@targetNamespace" />
+    <xsl:if test="@base">
 			<xsl:choose>
 				<xsl:when test="contains(@base, ':')">
 					<extends debug="CollonBase" name="{substring-after(@base,':')}"
