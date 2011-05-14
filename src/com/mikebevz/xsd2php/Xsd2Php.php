@@ -152,7 +152,7 @@ class Xsd2Php extends Common
         LIBXML_DTDATTR |
         LIBXML_NOENT |
         LIBXML_XINCLUDE);
-         
+
         $this->xpath = new \DOMXPath($this->dom);
         $this->targetNamespace = $this->getTargetNS($this->xpath);
         $this->shortNamespaces = $this->getNamespaces($this->xpath);
@@ -237,7 +237,6 @@ class Xsd2Php extends Common
      * @return void
      */
     public function loadImports($dom, $xsdFile = '') {
-
         $xpath = new \DOMXPath($dom);
         $query = "//*[local-name()='import' and namespace-uri()='http://www.w3.org/2001/XMLSchema']";
         $entries = $xpath->query($query);
@@ -245,11 +244,17 @@ class Xsd2Php extends Common
             return $dom;
         }
         foreach ($entries as $entry) {
+            // copy or download the imported schema to tmpfile
+            $tmpname = tempnam('.', 'schema');
+            $tmp = fopen($tmpname, 'w');
+            fwrite($tmp, file_get_contents($entry->getAttribute("schemaLocation")));
+
             // load XSD file
             $namespace = $entry->getAttribute('namespace');
             $parent = $entry->parentNode;
             $xsd = new \DOMDocument();
-            $xsdFileName = realpath(dirname($xsdFile).DIRECTORY_SEPARATOR.$entry->getAttribute("schemaLocation"));
+            $xsdFileName = realpath($tmpname);
+
             if ($this->debug) print('Importing '.$xsdFileName."\n");
 
             if (!file_exists($xsdFileName)) {
@@ -268,7 +273,8 @@ class Xsd2Php extends Common
                 $mxpath = new \DOMXPath($xsd);
                 $this->shortNamespaces = array_merge($this->shortNamespaces, $this->getNamespaces($mxpath));
 
-                $xsd = $this->loadIncludes($xsd, $filepath, $namespace);
+                $xsd = $this->loadIncludes($xsd, $filepath, $namespace,
+                  pathinfo($entry->getAttribute("schemaLocation"), PATHINFO_DIRNAME) . '/');
 
                 $this->loadedImportFiles[] = $xsdFileName;
                 $this->loadedImportFiles = array_unique($this->loadedImportFiles);
@@ -299,6 +305,10 @@ class Xsd2Php extends Common
             }
             // add to $dom
             $parent->removeChild($entry);
+            
+            // close tmp file
+            fclose($tmp);
+            unlink($tmpname);
         }
 
         $xpath = new \DOMXPath($dom);
@@ -321,15 +331,20 @@ class Xsd2Php extends Common
      *
      * @return void
      */
-    public function loadIncludes($dom, $filepath = '', $namespace = '') {
+    public function loadIncludes($dom, $filepath = '', $namespace = '', $urlpath = '') {
         $xpath = new \DOMXPath($dom);
         $query = "//*[local-name()='include' and namespace-uri()='http://www.w3.org/2001/XMLSchema']";
         $includes = $xpath->query($query);
 
         foreach ($includes as $entry) {
+            // copy or download the imported schema to tmpfile
+            $tmpname = tempnam('.', 'schema');
+            $tmp = fopen($tmpname, 'w');
+            fwrite($tmp, file_get_contents($urlpath . $entry->getAttribute("schemaLocation")));
+
             $parent = $entry->parentNode;
             $xsd = new \DOMDocument();
-            $xsdFileName = realpath($filepath.DIRECTORY_SEPARATOR.$entry->getAttribute("schemaLocation"));
+            $xsdFileName = realpath($tmpname);
             if ($this->debug) print('Including '.$xsdFileName."\n");
 
             if (!file_exists($xsdFileName)) {
@@ -365,6 +380,9 @@ class Xsd2Php extends Common
                 }
             }
             $parent->removeChild($entry);
+            
+            fclose($tmp);
+            unlink($tmpname);
         }
 
         $xpath = new \DOMXPath($dom);
