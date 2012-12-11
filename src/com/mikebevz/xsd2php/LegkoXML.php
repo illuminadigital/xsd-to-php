@@ -23,7 +23,7 @@ class LegkoXML {
     }
     
     public function compileSchema($schema, $destination) {
-        $this->xsd2php = new Xsd2Php($schema);  
+        $this->xsd2php = new Xsd2Php($schema, true);  
         $this->xsd2php->saveClasses($destination, true);
     }
     

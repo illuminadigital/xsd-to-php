@@ -247,7 +247,8 @@ class Xsd2Php extends Common
             // copy or download the imported schema to tmpfile
             $tmpname = tempnam('.', 'schema');
             $tmp = fopen($tmpname, 'w');
-            fwrite($tmp, file_get_contents($entry->getAttribute("schemaLocation")));
+			$schemaFile = $entry->getAttribute("schemaLocation");
+            fwrite($tmp, file_get_contents($schemaFile));
 
             // load XSD file
             $namespace = $entry->getAttribute('namespace');
@@ -255,14 +256,14 @@ class Xsd2Php extends Common
             $xsd = new \DOMDocument();
             $xsdFileName = realpath($tmpname);
 
-            if ($this->debug) print('Importing '.$xsdFileName."\n");
+            if ($this->debug) print('Importing '.$schemaFile."\n");
 
             if (!file_exists($xsdFileName)) {
                 if ($this->debug) print $xsdFileName. " is not found \n";
                 continue;
             }
-            if (in_array($xsdFileName, $this->loadedImportFiles)) {
-                if ($this->debug) print("Schema ".$xsdFileName." has been already imported");
+            if (in_array($schemaFile, $this->loadedImportFiles)) {
+                if ($this->debug) print("Schema ".$schemaFile." has been already imported");
                 $parent->removeChild($entry);
                 continue;
             }
@@ -276,7 +277,7 @@ class Xsd2Php extends Common
                 $xsd = $this->loadIncludes($xsd, $filepath, $namespace,
                   pathinfo($entry->getAttribute("schemaLocation"), PATHINFO_DIRNAME) . '/');
 
-                $this->loadedImportFiles[] = $xsdFileName;
+                $this->loadedImportFiles[] = $schemaFile;
                 $this->loadedImportFiles = array_unique($this->loadedImportFiles);
             }
             foreach ($xsd->documentElement->childNodes as $node) {
