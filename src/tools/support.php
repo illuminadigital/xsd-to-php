@@ -11,12 +11,40 @@ function fileexists($file) {
   return FALSE;
 }
 
+/**
+ * Add a path to the include paths, and add
+ * any sub-directories as well (allows the
+ * __autoload() function to work better).
+ *
+ * @param string $path
+ * @return array of include paths
+ */
 function add_include_path($path) {
   $include_paths = explode(PATH_SEPARATOR, get_include_path());
-  $include_paths[] = realpath($path);
+  $include_paths =  array_merge($include_paths, directoryToArray(realpath($path)));
   $include_paths = array_flip(array_flip($include_paths));
   set_include_path(implode(PATH_SEPARATOR, $include_paths));
+  #println($include_paths);
   return $include_paths;
+}
+
+function directoryToArray($directory, $recursive = TRUE) {
+  $array_items = array($directory);
+  if ($handle = opendir($directory)) {
+    while (false !== ($file = readdir($handle))) {
+      if ($file != "." && $file != "..") {
+        if (is_dir($directory. "/" . $file)) {
+          if ($recursive) {
+            $array_items = array_merge($array_items, directoryToArray($directory. "/" . $file, $recursive));
+          }
+          $file = $directory . "/" . $file;
+          $array_items[] = preg_replace("/\/\//si", "/", $file);
+        }
+      }
+    }
+    closedir($handle);
+  }
+  return $array_items;
 }
 
 add_include_path('./../../lib/ZF/1.10.7');
@@ -33,6 +61,13 @@ function println($msg = '', $prefix = '') {
 function __autoload($className){
   $psr0ClassName = str_replace('\\', '/', ltrim($className, '\\')) . '.php';
   if (@include_once $psr0ClassName){
+    return;
+  }
+
+  // Just try the raw name
+  $classes = explode('/', $psr0ClassName);
+  $rawClassName = array_pop($classes);
+  if (@include_once $rawClassName){
     return;
   }
 

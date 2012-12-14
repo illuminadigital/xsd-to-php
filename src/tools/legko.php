@@ -49,10 +49,15 @@ class LegkoTool {
           'wsdl-location|l-s' => 'WSDL service address',
           'wsdl-schema-url-s' => 'Public schema directory',
       ),
-      $argv
+      $argv //need this for some reason
     );
 
-    $opts = array();
+    if ($this->opts->schema) {
+      $opts['schema'] = $this->opts->schema;
+    }
+    if ($this->opts->schema) {
+      $opts['dest'] = $this->opts->dest;
+    }
     if ($this->opts->debug) {
       $opts['debug'] = TRUE;
     }
@@ -111,7 +116,7 @@ EOH;
       throw new RuntimeException("Specify path to XML Schema file (--schema PATH) [{$e->getMessage()}]");
     }
 
-    $this->legko->compileSchema($schema, $dest);
+    $this->legko->compileSchema($schema);
     $this->println('Bindings successfully generated in ' . realpath($dest));
   }
 
