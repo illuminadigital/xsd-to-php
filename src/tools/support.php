@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Check for file_exists() with include paths
+ */
+function fileexists($file) {
+  if (file_exists($file)) return TRUE;
+  foreach (explode(PATH_SEPARATOR, get_include_path()) as $path) {
+    if (file_exists("$path/$file")) return TRUE;
+  }
+  return FALSE;
+}
+
 function add_include_path($path) {
   $include_paths = explode(PATH_SEPARATOR, get_include_path());
   $include_paths[] = realpath($path);

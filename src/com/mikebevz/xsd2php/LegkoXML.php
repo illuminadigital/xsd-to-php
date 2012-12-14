@@ -1,41 +1,40 @@
 <?php
 namespace com\mikebevz\xsd2php;
 
-require_once 'Xsd2Php.php';
-
 class LegkoXML {
 
-    public $version = "0.0.4";
-    
+    protected $version = "0.0.4";
+
     /**
-     * 
      * @var Xsd2Php
      */
-    private $xsd2php;
-    
-    private $xml2php;
-    
-    private $php2wsdl;
-    
-    public function __construct() {
-          
-    
+    protected $xsd2php;
+
+    protected $php2wsdl;
+
+    protected $debug = FALSE;
+
+    protected $nocreate = FALSE;
+
+    public function __construct(array $opts = array()) {
+      foreach ($opts as $opt=> $value) {
+        if (property_exists($this, $opt)) {
+          $this->$opt = $value;
+        }
+      }
     }
-    
+
     public function compileSchema($schema, $destination) {
-        $this->xsd2php = new Xsd2Php($schema, true);  
-        $this->xsd2php->saveClasses($destination, true);
+      $this->xsd2php = new Xsd2Php($schema, $this->debug);
+      $this->xsd2php->saveClasses($destination, !$this->nocreate);
     }
-    
-    public function generateWsdl($class) {
-        
-    }
-    
+
+    public function generateWsdl($phpClass) {}
+
     /**
      * @return the $version
      */
-    public function getVersion()
-    {
+    public function getVersion() {
         return $this->version;
     }
 }

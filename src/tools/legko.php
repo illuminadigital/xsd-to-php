@@ -39,18 +39,28 @@ class LegkoTool {
   public function __construct() {
     global $argv;
 
-    $this->legko = new \com\mikebevz\xsd2php\LegkoXML();
-
     $this->opts = new Zend_Console_Getopt(
       array(
+          'schema|s-s' => 'Source XML schema file',
           'dest|d=s' => 'Destination directory',
-          'schema|s-s' => 'XML schema folder',
-          'class|c-s' => 'PHP class',
+          'nocreate' => 'Flag to prevent creation of destination directories',
+          'debug' => 'Flag to debug the conversion',
+          'class|c-s' => 'PHP class to be turned into a WSDL',
           'wsdl-location|l-s' => 'WSDL service address',
           'wsdl-schema-url-s' => 'Public schema directory',
       ),
       $argv
     );
+
+    $opts = array();
+    if ($this->opts->debug) {
+      $opts['debug'] = TRUE;
+    }
+    if ($this->opts->nocreate) {
+      $opts['nocreate'] = TRUE;
+    }
+
+    $this->legko = new \com\mikebevz\xsd2php\LegkoXML($opts);
   }
 
   public function showHelp() {
@@ -60,29 +70,32 @@ Legko XML Tool v. $version
 Syntax: legko action options
 
 Actions:
-\033[32mcompile-schema\033[0m \033[33m--schema PATH \033[0m \033[33m--dest PATH \033[0m  Compile XML Schema to PHP bindings
-\033[32mgenerate-wsdl\033[0m \033[33m--class PATH \033[0m \033[33m--dest PATH \033[0m Generate WSDL from PHP class
+\033[32mcompile-schema\033[0m \033[33m--schema FILEPATH \033[0m \033[33m--dest DIRPATH \033[0m \033[33m--debug \033[0m \033[33m--nocreate \033[0m  Compile XML Schema to PHP bindings
+\033[32mgenerate-wsdl\033[0m \033[33m--class FILEPATH \033[0m \033[33m--dest DIRPATH \033[0m Generate WSDL from PHP class
 
 Options:
-\033[33m--dest PATH \033[0m Output directory, generated files saved there
-\033[33m--schema PATH \033[0m Path to XML Schema file
-\033[33m--class PATH \033[0m PHP class
+\033[33m--schema FILEPATH \033[0m Path to XML Schema file
+\033[33m--dest DIRPATH \033[0m Output directory, generated files saved there
+\033[33m--debug \033[0m Display debugging information
+\033[33m--nocreate \033[0m Do not create the output directory even if it doesn't exist
+\033[33m--class FILEPATH \033[0m PHP class
 \033[33m--wsdl-location URL \033[0m Web service address
 \033[33m--wsdl-schema-url URL \033[0m Public schema directory
 
 Examples:
-Generate PHP bindings
-    \033[32m$ legko compile-schema --schema MySchema.xsd --dest ../bindings \033[0m
+Generate PHP bindings with debug on
+    \033[32m$ legko compile-schema --schema MySchema.xsd --dest ../bindings --debug \033[0m
 
 EOH;
+
     $this->println($help);
-    $this->println("");
+    $this->println();
   }
 
   public function compileSchema() {
     try {
-      $schema = $this->opts->getOption('schema');
-      if (!file_exists($schema)) {
+      $schema = $this->opts->schema;
+      if (!fileexists($schema)) {
         throw new RuntimeException("Schema file '$schema' was not found");
       }
       add_include_path(dirname($schema));
@@ -92,7 +105,7 @@ EOH;
     }
 
     try {
-      $dest = $this->opts->getOption('dest');
+      $dest = $this->opts->dest;
     }
     catch (\RuntimeException $e) {
       throw new RuntimeException("Specify path to XML Schema file (--schema PATH) [{$e->getMessage()}]");
@@ -102,7 +115,7 @@ EOH;
     $this->println('Bindings successfully generated in ' . realpath($dest));
   }
 
-  protected function println($msg = "") {
+  protected function println($msg = '') {
     print("$msg\n");
   }
 }
