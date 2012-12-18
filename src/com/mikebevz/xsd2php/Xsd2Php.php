@@ -17,9 +17,6 @@ namespace com\mikebevz\xsd2php;
  * limitations under the License.
  */
 
-require_once dirname(__FILE__).'/PHPClass.php';
-//require_once dirname(__FILE__).'/Common.php';
-
 /**
  * Generate PHP classes based on XSD schema
  *
@@ -193,6 +190,7 @@ class Xsd2Php extends Common
     $val = NULL;
     switch ($var) {
       case 'binding':
+      case 'xsd2php':
       case 'basicTypes':
       case 'targetNamespace':
       case 'shortNamespaces':

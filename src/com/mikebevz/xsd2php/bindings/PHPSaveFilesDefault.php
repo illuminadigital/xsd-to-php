@@ -21,6 +21,10 @@ class PHPSaveFilesDefault implements \com\mikebevz\xsd2php\iPHPSaveFiles {
     }
   }
 
+  public function __get($var) {
+    return property_exists($this, $var) ? $this->$var : NULL;
+  }
+
   /**
    * Save PHP files to directory structure
    *

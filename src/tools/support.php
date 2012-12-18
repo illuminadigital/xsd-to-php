@@ -59,8 +59,14 @@ function println($msg = '', $prefix = '') {
 }
 
 function __autoload($className){
+  $debug = FALSE;
+  if ($debug) {
+    println(explode(PATH_SEPARATOR, get_include_path()), __FUNCTION__);
+    println("Trying to load: $className", __FUNCTION__);
+  }
   $psr0ClassName = str_replace('\\', '/', ltrim($className, '\\')) . '.php';
   if (@include_once $psr0ClassName){
+    if ($debug) println("$psr0ClassName Loaded as PSR0", __FUNCTION__);
     return;
   }
 
@@ -68,21 +74,29 @@ function __autoload($className){
   $classes = explode('/', $psr0ClassName);
   $rawClassName = array_pop($classes);
   if (@include_once $rawClassName){
+    if ($debug) println("$rawClassName Loaded as Raw", __FUNCTION__);
     return;
   }
 
   // this is to take care of the PEAR-style of naming classes
   $pearClassName = str_replace('_', '/', $psr0ClassName);
   if (@include_once $pearClassName){
+    if ($debug) println("$pearClassName Loaded as PEAR", __FUNCTION__);
     return;
   }
 
   // And finally see if we can load it as a Zend class which (might)
   // have a directory with the same name as the class.
-  $className = str_replace('\\', '/', ltrim($className, '\\'));
-  $classes = explode('/', str_replace('_', '/', $className));
-  $zendClassName = $className . '/' . array_pop($classes) . '.php';
-  @include_once $zendClassName;
+  $xClassName = str_replace('\\', '/', ltrim($className, '\\'));
+  $classes = explode('/', str_replace('_', '/', $xClassName));
+  $zendClassName = $xClassName . '/' . array_pop($classes) . '.php';
+  if (@include_once $zendClassName) {
+    if ($debug) println("$zendClassName Loaded as Zend", __FUNCTION__);
+    return;
+  }
+  if ($debug) {
+    println("$className Not Loaded", __FUNCTION__);
+  }
 }
 
 spl_autoload_register('__autoload');
