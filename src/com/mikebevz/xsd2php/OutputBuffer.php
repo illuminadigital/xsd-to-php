@@ -40,4 +40,10 @@ class OutputBuffer {
   public function line($str = '') {
     $this->append($this->eoln . $str);
   }
+
+  public function lines(array $lines = array(), $indent = "") {
+    foreach ($lines as $line) {
+      $this->line("$indent$line");
+    }
+  }
 }

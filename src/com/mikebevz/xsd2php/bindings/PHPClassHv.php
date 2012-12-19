@@ -14,6 +14,7 @@ class PHPClassHv extends Common {
     $phpClass = new static($parent);
 
     $phpClass->name = $class->getAttribute('name');
+    $phpClass->phpName = static::phpIdentifier($phpClass->name, FALSE);
 
     if ($class->getAttribute('type') != '') {
       $phpClass->type = $class->getAttribute('type');
@@ -36,9 +37,8 @@ class PHPClassHv extends Common {
 
     $docs = $xPath->query('docs/doc', $class);
     $docBlock = array();
-    //if ($phpClass->namespace != $this->xsd2php->xsdNs) {
-    $docBlock['xmlNamespace'] = $phpClass->parent->expandNS($phpClass->namespace);
-    //}
+
+    $docBlock['xmlNamespace'] = strtolower($phpClass->parent->expandNS($phpClass->namespace));
     $docBlock['xmlType']      = $phpClass->type;
     $docBlock['xmlName']      = $phpClass->name;
     if ($phpClass->namespace != '') {
@@ -57,13 +57,15 @@ class PHPClassHv extends Common {
 
     $phpClass->classDocBlock = $docBlock;
 
-    $props      = $xPath->query('property', $class);
+    $props = $xPath->query('property', $class);
     $properties = array();
     $i = 0;
     $isArray = false;
     foreach($props as $prop) {
       $properties[$i]['name'] = $prop->getAttribute('name');
-      $docs                   = $xPath->query('docs/doc', $prop);
+      $properties[$i]['phpName'] = static::phpIdentifier($properties[$i]['name']);
+
+      $docs = $xPath->query('docs/doc', $prop);
       foreach ($docs as $doc) {
         $properties[$i]["docs"][$doc->getAttribute('name')] = $doc->nodeValue;
       }
@@ -88,7 +90,7 @@ class PHPClassHv extends Common {
 
       }
       if ($prop->getAttribute('name') != '') {
-        $properties[$i]["docs"]['xmlName']      = $prop->getAttribute('name');
+        $properties[$i]["docs"]['xmlName'] = $prop->getAttribute('name');
       }
 
       //@todo if $prop->getAttribute('maxOccurs') > 1 - var can be an array - in future special accessor cane be implemented
@@ -142,11 +144,42 @@ class PHPClassHv extends Common {
   }
 
   /**
-   * Class name
+   * Make any changes to turn a supplied identifier into a valid PHP one.
+   *
+   * @param string $raw
+   * @return string valid PHP identifier derived from $raw
+   */
+  static protected function phpIdentifier($raw, $instance = TRUE) {
+    $raw = str_replace(array('-', '/', '\\'), '_', $raw);
+    $raw = array_map('ucfirst', array_filter(explode('_', $raw)));
+    if ($instance) {
+      $s = $raw[0];
+      if (count($raw)>1) {
+        $s = strtolower($s);
+      }
+      else {
+        $c = strtolower(substr($s, 0, 1));
+        $s = $c . substr($s, 1);
+      }
+      $raw[0] = $s;
+    }
+
+    return implode('', $raw);
+  }
+
+  /**
+   * Raw class name
    *
    * @var class name
    */
   protected $name;
+
+  /**
+   * PHP class name
+   *
+   * @var class name
+   */
+  protected $phpName;
 
   /**
    * Array of class level documentation
@@ -179,7 +212,7 @@ class PHPClassHv extends Common {
    *
    * @var array
    */
-  protected $classProperties;
+  protected $classProperties = array();
 
   /**
    * Class to extend
@@ -192,12 +225,6 @@ class PHPClassHv extends Common {
    * @var string
    */
   protected $extendsNamespace;
-
-  /**
-   * Array of class properties  array(array('name'=>'propertyName', 'docs' => array('property'=>'value')))
-   * @var array
-   */
-  protected $properties;
 
   /**
    * The output buffer
@@ -225,20 +252,20 @@ class PHPClassHv extends Common {
   }
 
   /**
-   * Returns array of PHP classes
+   * Returns a PHP class
    *
-   * @return array
+   * @return string
    */
   protected function getPhpCode() {
     if ($this->extendsNamespace != '') {
       $this->buffer->line("use {$this->extendsNamespace}");
     }
 
-    if (!empty($this->classDocBlock)) {
-      $this->getDocBlock($this->classDocBlock);
-    }
+    // Send the OXM entity header
+    $this->sendClassDocBlock($this->classDocBlock);
 
-    $define = "class {$this->name}";
+    // Build the class identification line and send
+    $define = "class {$this->phpName}";
     if ($this->extends != '') {
       if ($this->extendsNamespace != '') {
         $nsLastName = array_reverse(explode('\\', $this->extendsNamespace));
@@ -249,54 +276,127 @@ class PHPClassHv extends Common {
     }
     $this->buffer->line("{$define} {");
     $this->buffer->line('');
-    if (in_array($this->type, $this->basicTypes)) {
-      $this->buffer->line("\t\t" . $this->getDocBlock(array('xmlType'=>'value', 'var' => $this->normalizeType($this->type)), "\t\t"));
-      $this->buffer->line("\tprotected \$value;");
+
+    foreach ($this->classProperties as $property) {
+      $this->sendClassProperty($property);
     }
 
-    if (!empty($this->classProperties)) {
-      $this->buffer->line($this->getClassProperties($this->classProperties));
+    foreach ($this->classProperties as $property) {
+      $this->sendClassPropertyGetter($property);
+      $this->sendClassPropertySetter($property);
     }
 
+    // Set the end of the
     $this->buffer->line('');
-    $this->buffer->line('');
-    $this->buffer->line("} // end class {$this->name}");
+    $this->buffer->line("} // end class {$this->phpName}");
 
     return $this->buffer;
   }
 
   /**
-   * Return class properties from array with indent specified
+   * Send Class Doc block to output buffer
    *
-   * @param array $props  Properties array
-   * @param array $indent Indentation in tabs
+   * @param array  $docs   Array of docs
    *
-   * @return string
+   * return string
    */
-  protected function getClassProperties($props, $indent = "\t") {
-    $this->buffer->line($indent);
-
-    foreach ($props as $prop) {
-      if (!empty($prop['docs'])) {
-        $this->getDocBlock($prop['docs'], "$indent\t");
-      }
-      $this->buffer->line("{$indent}public \${$prop['name']}");
-    }
+  protected function sendClassDocBlock($docs) {
+    $this->buffer->lines(array(
+      '/**',
+      ' * @XmlEntity',
+      ' */',
+    ));
   }
 
   /**
-   * Return docBlock
+   * Return class properties from array with indent specified
+   *
+   * @param array $property  Property array
+   * @param array $indent Indentation in tabs
+   *
+   */
+  protected function sendClassProperty($property, $indent = "\t") {
+    $this->buffer->line($indent);
+
+    if (!empty($property['docs'])) {
+      $this->sendClassPropertyDocBlock($property['docs'], "$indent\t");
+    }
+
+    $this->buffer->line("{$indent}protected \${$property['phpName']}");
+  }
+
+  /**
+   * Send property docBlock
    *
    * @param array  $docs   Array of docs
    * @param string $indent Indentation
    *
-   * return string
    */
-  public function getDocBlock($docs, $indent = '') {
+  protected function sendClassPropertyDocBlock($docs, $indent = '') {
     $this->buffer->line('/**');
     foreach ($docs as $key => $value) {
       $this->buffer->line("$indent * @$key $value");
     }
     $this->buffer->line("$indent */");
+  }
+
+  /**
+   * Send property Getter
+   *
+   * @param array  $docs   Array of docs
+   * @param string $indent Indentation
+   *
+   */
+  protected function sendClassPropertyGetter($property, $indent = "\t") {
+    $this->buffer->line($indent);
+
+    $phpName = $property['phpName'];
+    $ucPhpName = ucfirst($phpName);
+
+    if (!empty($property['docs'])) {
+      #$this->sendClassPropertyGetSetDocBlock($action, $phpName, $docs, "$indent\t");
+    }
+
+    $this->buffer->lines(array(
+      "protected function get{$ucPhpName}() {",
+      "{$indent}return \${$phpName};",
+      '}',
+      '',
+    ), $indent);
+  }
+
+  /**
+   * Send property Setter
+   *
+   * @param array  $docs   Array of docs
+   * @param string $indent Indentation
+   *
+   */
+  protected function sendClassPropertySetter($property, $indent = "\t") {
+    $this->buffer->line($indent);
+
+    $phpName = $property['phpName'];
+    $ucPhpName = ucfirst($phpName);
+
+    if (!empty($property['docs'])) {
+      #$this->sendClassPropertyGetSetDocBlock($action, $phpName, $docs, "$indent\t");
+    }
+
+    $this->buffer->lines(array(
+      "protected function set{$ucPhpName}(\${$phpName}) {",
+      "{$indent}\$this->{$phpName} = \${$phpName};",
+      '}',
+      '',
+    ), $indent);
+  }
+
+  /**
+   * Send property Getter or Setter
+   *
+   * @param array  $docs   Array of docs
+   * @param string $indent Indentation
+   *
+   */
+  protected function sendClassPropertyGetSet($action, $phpName, $docs, $indent = "\t") {
   }
 }
