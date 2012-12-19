@@ -24,13 +24,13 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
       $docBlock = $phpClass->classDocBlock;
 
       $namespaceClause = '';
-      if ($docBlock['xmlNamespace'] != '') {
-        $namespaceClause = 'namespace ' . $this->namespaceToPhp($docBlock['xmlNamespace']) . ';';
+      if ($docBlock->xmlNamespace != '') {
+        $namespaceClause = 'namespace ' . $this->namespaceToPhp($docBlock->xmlNamespace) . ';';
       }
 
       $phpClass->buffer->reset("<?php\n{$namespaceClause}\n");
 
-      $sourceCode["{$docBlock['xmlName']}|{$phpClass->namespace}"] = (string) $phpClass;
+      $sourceCode["{$docBlock->xmlName}|{$phpClass->namespace}"] = (string) $phpClass;
     }
 
     return $sourceCode;
@@ -71,13 +71,6 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
       $ns = preg_replace('/urn:/', '', $ns);
       $ns = preg_replace('/:/','\\', $ns);
     }
-
-    /**
-     if (preg_match('/http:\/\//', $ns)) {
-     $ns = preg_replace('/http:\/\//', '', $ns);
-     $ns = preg_replace('/\//','\\', $ns);
-     $ns = preg_replace('/\./', '\\',$ns);
-     }*/
 
     $matches = array();
     if (preg_match("#((http|https|ftp)://(\S*?\.\S*?))(\s|\;|\)|\]|\[|\{|\}|,|\"|'|:|\<|$|\.\s)#", $ns, $matches)) {

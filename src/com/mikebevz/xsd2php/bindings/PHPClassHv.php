@@ -18,10 +18,12 @@ class PHPClassHv extends Common {
 
     if ($class->getAttribute('type') != '') {
       $phpClass->type = $class->getAttribute('type');
+      $phpClass->simpleType = false;
     }
 
     if ($class->getAttribute('simpleType') != '') {
       $phpClass->type = $class->getAttribute('simpleType');
+      $phpClass->simpleType = true;
     }
     if ($class->getAttribute('namespace') != '') {
       $phpClass->namespace = $class->getAttribute('namespace');
@@ -35,110 +37,34 @@ class PHPClassHv extends Common {
       }
     }
 
-    $docs = $xPath->query('docs/doc', $class);
-    $docBlock = array();
+    $docBlock = new PHPDocBlock();
 
-    $docBlock['xmlNamespace'] = strtolower($phpClass->parent->expandNS($phpClass->namespace));
-    $docBlock['xmlType']      = $phpClass->type;
-    $docBlock['xmlName']      = $phpClass->name;
+    $docBlock->xmlNamespace = strtolower($phpClass->parent->expandNS($phpClass->namespace));
+    $docBlock->xmlType      = $phpClass->type;
+    $docBlock->xmlName      = $phpClass->name;
     if ($phpClass->namespace != '') {
-      $docBlock['var'] = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($phpClass->namespace))."\\".$phpClass->name;
+      $docBlock->var = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($phpClass->namespace))."\\".$phpClass->name;
     } else {
-      $docBlock['var'] = $phpClass->name;
+      $docBlock->var = $phpClass->name;
     }
 
+    $docs = $xPath->query('docs/doc', $class);
     foreach ($docs as $doc) {
+      $field = "xml" . $doc->getAttribute('name');
       if ($doc->nodeValue != '') {
-        $docBlock["xml".$doc->getAttribute('name')] = $doc->nodeValue;
+        $docBlock->$field = $doc->nodeValue;
       } elseif ($doc->getAttribute('value') != '') {
-        $docBlock["xml".$doc->getAttribute('name')] = $doc->getAttribute('value');
+        $docBlock->$field = $doc->getAttribute('value');
       }
     }
 
     $phpClass->classDocBlock = $docBlock;
 
-    $props = $xPath->query('property', $class);
-    $properties = array();
-    $i = 0;
-    $isArray = false;
-    foreach($props as $prop) {
-      $properties[$i]['name'] = $prop->getAttribute('name');
-      $properties[$i]['phpName'] = static::phpIdentifier($properties[$i]['name']);
-
-      $docs = $xPath->query('docs/doc', $prop);
-      foreach ($docs as $doc) {
-        $properties[$i]["docs"][$doc->getAttribute('name')] = $doc->nodeValue;
-      }
-      if ($prop->getAttribute('xmlType') != '') {
-        $properties[$i]["docs"]['xmlType']      = $prop->getAttribute('xmlType');
-      }
-      if ($prop->getAttribute('namespace') != '') {
-        $properties[$i]["docs"]['xmlNamespace'] = $phpClass->parent->expandNS($prop->getAttribute('namespace'));
-      }
-      if ($prop->getAttribute('minOccurs') != '') {
-        $properties[$i]["docs"]['xmlMinOccurs'] = $prop->getAttribute('minOccurs');
-      }
-      if ($prop->getAttribute('maxOccurs') != '') {
-        $properties[$i]["docs"]['xmlMaxOccurs'] = $prop->getAttribute('maxOccurs');
-        // If maxOccurs > 1, mark type as an array
-        if ($prop->getAttribute('maxOccurs') > 1) {
-          $isArray = $prop->getAttribute('maxOccurs');
-
-        } elseif($prop->getAttribute('maxOccurs')=='unbounded') {
-          $isArray = true;
-        }
-
-      }
-      if ($prop->getAttribute('name') != '') {
-        $properties[$i]["docs"]['xmlName'] = $prop->getAttribute('name');
-      }
-
-      //@todo if $prop->getAttribute('maxOccurs') > 1 - var can be an array - in future special accessor cane be implemented
-      if ($prop->getAttribute('type') != '' && $prop->getAttribute('typeNamespace') == '') {
-        // In general it's strange to give to Type name's namespace. Reconsider this part
-        if ($prop->getAttribute('namespace') != '' && $prop->getAttribute('namespace') != $phpClass->parent->xsd2php->xsdNs) {
-          $ns = "";
-          if ($prop->getAttribute('namespace') == "#default#") {
-            $ns = $phpClass->parent->namespaceToPhp($phpClass->parent->xsd2php->targetNamespace);
-          } else {
-            $ns = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($prop->getAttribute('namespace')));
-          }
-          $properties[$i]["docs"]['var'] = $ns.'\\'.$prop->getAttribute('type');
-        } else {
-          $properties[$i]["docs"]['var'] = $prop->getAttribute('type');
-        }
-        // Is it unbounded array?
-        if ($isArray === true) {
-          $properties[$i]["docs"]['var'] = $properties[$i]["docs"]['var']."[]";
-          $isArray = false;
-        }
-        // Is it array with defined maximum amount of elements?
-        if ($isArray > 1) {
-          $properties[$i]["docs"]['var'] = $properties[$i]["docs"]['var']."[".$isArray."]";
-          $isArray = false;
-        }
-      }
-
-      if ($prop->getAttribute('type') != '' && $prop->getAttribute('typeNamespace') != '') {
-        $ns = "";
-        if ($prop->getAttribute('typeNamespace') == "#default#") {
-          $ns = $phpClass->parent->namespaceToPhp($phpClass->parent->xsd2php->targetNamespace);
-        } else {
-          $ns = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($prop->getAttribute('typeNamespace')));
-        }
-
-        if ($prop->getAttribute('typeNamespace') == $phpClass->parent->xsd2php->xsdNs) {
-          $properties[$i]["docs"]['var'] = $phpClass->parent->normalizeType($prop->getAttribute('type'));
-        } else {
-          $properties[$i]["docs"]['var'] = $ns.'\\'.$prop->getAttribute('type');
-        }
-      }
-
-      $i++;
+    $properties = $xPath->query('property', $class);
+    foreach($properties as $property) {
+      $phpClass->classProperties[] = \com\mikebevz\xsd2php\PHPPropertyHv::factory($phpClass->parent, $dom, $property);
     }
 
-    $phpClass->classProperties = $properties;
-//*/
     return $phpClass;
 
   }
@@ -194,6 +120,13 @@ class PHPClassHv extends Common {
    * @var string
    */
   protected $type;
+
+  /**
+   * Class simple type
+   *
+   * @var boolean
+   */
+  protected $simpleType;
 
   /**
    * Class namespace
@@ -275,19 +208,19 @@ class PHPClassHv extends Common {
       }
     }
     $this->buffer->line("{$define} {");
-    $this->buffer->line('');
 
+    // Output all the property declarations
     foreach ($this->classProperties as $property) {
-      $this->sendClassProperty($property);
+      $property->declaration($this->buffer);
     }
 
+    // Output all the property getters & setters
     foreach ($this->classProperties as $property) {
-      $this->sendClassPropertyGetter($property);
-      $this->sendClassPropertySetter($property);
+      $property->getter($this->buffer);
+      $property->setter($this->buffer);
     }
 
-    // Set the end of the
-    $this->buffer->line('');
+    // And finish up
     $this->buffer->line("} // end class {$this->phpName}");
 
     return $this->buffer;
@@ -306,97 +239,5 @@ class PHPClassHv extends Common {
       ' * @XmlEntity',
       ' */',
     ));
-  }
-
-  /**
-   * Return class properties from array with indent specified
-   *
-   * @param array $property  Property array
-   * @param array $indent Indentation in tabs
-   *
-   */
-  protected function sendClassProperty($property, $indent = "\t") {
-    $this->buffer->line($indent);
-
-    if (!empty($property['docs'])) {
-      $this->sendClassPropertyDocBlock($property['docs'], "$indent\t");
-    }
-
-    $this->buffer->line("{$indent}protected \${$property['phpName']}");
-  }
-
-  /**
-   * Send property docBlock
-   *
-   * @param array  $docs   Array of docs
-   * @param string $indent Indentation
-   *
-   */
-  protected function sendClassPropertyDocBlock($docs, $indent = '') {
-    $this->buffer->line('/**');
-    foreach ($docs as $key => $value) {
-      $this->buffer->line("$indent * @$key $value");
-    }
-    $this->buffer->line("$indent */");
-  }
-
-  /**
-   * Send property Getter
-   *
-   * @param array  $docs   Array of docs
-   * @param string $indent Indentation
-   *
-   */
-  protected function sendClassPropertyGetter($property, $indent = "\t") {
-    $this->buffer->line($indent);
-
-    $phpName = $property['phpName'];
-    $ucPhpName = ucfirst($phpName);
-
-    if (!empty($property['docs'])) {
-      #$this->sendClassPropertyGetSetDocBlock($action, $phpName, $docs, "$indent\t");
-    }
-
-    $this->buffer->lines(array(
-      "protected function get{$ucPhpName}() {",
-      "{$indent}return \${$phpName};",
-      '}',
-      '',
-    ), $indent);
-  }
-
-  /**
-   * Send property Setter
-   *
-   * @param array  $docs   Array of docs
-   * @param string $indent Indentation
-   *
-   */
-  protected function sendClassPropertySetter($property, $indent = "\t") {
-    $this->buffer->line($indent);
-
-    $phpName = $property['phpName'];
-    $ucPhpName = ucfirst($phpName);
-
-    if (!empty($property['docs'])) {
-      #$this->sendClassPropertyGetSetDocBlock($action, $phpName, $docs, "$indent\t");
-    }
-
-    $this->buffer->lines(array(
-      "protected function set{$ucPhpName}(\${$phpName}) {",
-      "{$indent}\$this->{$phpName} = \${$phpName};",
-      '}',
-      '',
-    ), $indent);
-  }
-
-  /**
-   * Send property Getter or Setter
-   *
-   * @param array  $docs   Array of docs
-   * @param string $indent Indentation
-   *
-   */
-  protected function sendClassPropertyGetSet($action, $phpName, $docs, $indent = "\t") {
   }
 }
