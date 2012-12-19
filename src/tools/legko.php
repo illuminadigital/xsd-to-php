@@ -89,7 +89,7 @@ Actions:
 Options:
 \033[33m--schema FILEPATH \033[0m Path to XML Schema file
 \033[33m--dest DIRPATH \033[0m Output directory, generated files saved there
-\033[33m--binding CALSS \033[0m Part-name of the class (stored in the 'bindings' directory) to use for generating the PHP. All classes are of the form PHPSaveFilesXXXXX, just use the XXXXX part here (e.g. 'default').
+\033[33m--binding CLASS \033[0m Part-name of the class (stored in the 'bindings' directory) to use for generating the PHP. All classes are of the form PHPSaveFilesXXXXX, just use the XXXXX part here (e.g. 'default').
 \033[33m--debug \033[0m Display debugging information
 \033[33m--nocreate \033[0m Do not create the output directory even if it doesn't exist
 \033[33m--class FILEPATH \033[0m PHP class
@@ -98,7 +98,7 @@ Options:
 
 Examples:
 Generate PHP bindings with debug on
-    \033[32m$ legko compile-schema --schema MySchema.xsd --dest ../bindings --debug \033[0m
+    \033[32m$ legko compile-schema --schema MySchema.xsd --dest ./php --binding default --debug \033[0m
 
 EOH;
 
