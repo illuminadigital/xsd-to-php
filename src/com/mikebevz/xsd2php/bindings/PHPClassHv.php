@@ -7,7 +7,7 @@ namespace com\mikebevz\xsd2php;
  * @version 0.0.1
  *
  */
-class PHPClassHv extends Common {
+class PHPClassHv extends PHPCommonHv {
 
   static public function factory(PHPSaveFilesDefault $parent, \DOMDocument $dom, \DOMElement $class) {
     $xPath = new \DOMXPath($dom);
@@ -15,6 +15,7 @@ class PHPClassHv extends Common {
 
     $phpClass->name = $class->getAttribute('name');
     $phpClass->phpName = static::phpIdentifier($phpClass->name, FALSE);
+    $phpClass->ucPhpName = ucfirst($phpClass->phpName);
 
     if ($class->getAttribute('type') != '') {
       $phpClass->type = $class->getAttribute('type');
@@ -30,89 +31,39 @@ class PHPClassHv extends Common {
     }
 
     if ($class->getElementsByTagName('extends')->length > 0) {
-      if (!in_array($class->getElementsByTagName('extends')->item(0)->getAttribute('name'), $phpClass->basicTypes)) {
+      if (!in_array($class->getElementsByTagName('extends')->item(0)->getAttribute('name'), $phpClass->parent->basicTypes)) {
         $phpClass->extends = $class->getElementsByTagName('extends')->item(0)->getAttribute('name');
         $phpClass->type    = $class->getElementsByTagName('extends')->item(0)->getAttribute('name');
         $phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($class->getElementsByTagName('extends')->item(0)->getAttribute('namespace'));
       }
     }
 
-    $docBlock = new PHPDocBlock();
-
-    $docBlock->xmlNamespace = strtolower($phpClass->parent->expandNS($phpClass->namespace));
-    $docBlock->xmlType      = $phpClass->type;
-    $docBlock->xmlName      = $phpClass->name;
+    $phpClass->docBlock->xmlNamespace = strtolower($phpClass->parent->expandNS($phpClass->namespace));
+    $phpClass->docBlock->xmlType      = $phpClass->type;
+    $phpClass->docBlock->xmlName      = $phpClass->name;
     if ($phpClass->namespace != '') {
-      $docBlock->var = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($phpClass->namespace))."\\".$phpClass->name;
+      $phpClass->docBlock->var = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($phpClass->namespace))."\\".$phpClass->name;
     } else {
-      $docBlock->var = $phpClass->name;
+      $phpClass->docBlock->var = $phpClass->name;
     }
 
     $docs = $xPath->query('docs/doc', $class);
     foreach ($docs as $doc) {
       $field = "xml" . $doc->getAttribute('name');
       if ($doc->nodeValue != '') {
-        $docBlock->$field = $doc->nodeValue;
+        $phpClass->docBlock->$field = $doc->nodeValue;
       } elseif ($doc->getAttribute('value') != '') {
-        $docBlock->$field = $doc->getAttribute('value');
+        $phpClass->docBlock->$field = $doc->getAttribute('value');
       }
     }
-
-    $phpClass->classDocBlock = $docBlock;
 
     $properties = $xPath->query('property', $class);
     foreach($properties as $property) {
-      $phpClass->classProperties[] = \com\mikebevz\xsd2php\PHPPropertyHv::factory($phpClass->parent, $dom, $property);
+      $phpClass->classProperties[] = \com\mikebevz\xsd2php\PHPPropertyHv::factory($phpClass, $dom, $property);
     }
 
     return $phpClass;
-
   }
-
-  /**
-   * Make any changes to turn a supplied identifier into a valid PHP one.
-   *
-   * @param string $raw
-   * @return string valid PHP identifier derived from $raw
-   */
-  static protected function phpIdentifier($raw, $instance = TRUE) {
-    $raw = str_replace(array('-', '/', '\\'), '_', $raw);
-    $raw = array_map('ucfirst', array_filter(explode('_', $raw)));
-    if ($instance) {
-      $s = $raw[0];
-      if (count($raw)>1) {
-        $s = strtolower($s);
-      }
-      else {
-        $c = strtolower(substr($s, 0, 1));
-        $s = $c . substr($s, 1);
-      }
-      $raw[0] = $s;
-    }
-
-    return implode('', $raw);
-  }
-
-  /**
-   * Raw class name
-   *
-   * @var class name
-   */
-  protected $name;
-
-  /**
-   * PHP class name
-   *
-   * @var class name
-   */
-  protected $phpName;
-
-  /**
-   * Array of class level documentation
-   *
-   * @var array
-   */
-  protected $classDocBlock;
 
   /**
    * Class type
@@ -127,18 +78,6 @@ class PHPClassHv extends Common {
    * @var boolean
    */
   protected $simpleType;
-
-  /**
-   * Class namespace
-   * @var string
-   */
-  protected $namespace;
-
-  /**
-   * Class type namespace
-   * @var string
-   */
-  protected $typeNamespace;
 
   /**
    * Class properties
@@ -160,28 +99,66 @@ class PHPClassHv extends Common {
   protected $extendsNamespace;
 
   /**
+   * All the classes used by this class
+   * @var array of string
+   */
+  protected $usedMap = array();
+
+  /**
    * The output buffer
    * @var object OutputBuffer
    */
   protected $buffer;
 
-  /**
-   * Parent save-files object
-   * @var object PHPSaveFilesDefault
-   */
-  protected $parent;
-
   protected function __construct(PHPSaveFilesDefault $parent) {
-    $this->parent = $parent;
+    parent::__construct($parent);
     $this->buffer = new OutputBuffer();
   }
 
-  public function __get($var) {
-    return property_exists($this, $var) ? $this->$var : NULL;
+  public function __toString() {
+    $sourceCode =  (string) $this->getPhpCode();
+
+    // Build the namespace clause for the file...
+    $namespaceClause = '';
+    if ($this->docBlock->xmlNamespace != '') {
+      $namespace = $this->parent->namespaceToPhp($this->docBlock->xmlNamespace);
+      $namespace = str_replace('.', '\\', $namespace);
+      $namespaceClause = "namespace {$namespace};";
+    }
+    $firstBit = "<?php\n{$namespaceClause}\n";
+
+    // Now collect the namespaces to be used...
+
+    $uses = array();
+    foreach ($this->usedMap as $type) {
+      $uses[] = $this->parent->phpClasses[$type]->useClause();
+    }
+
+    return $firstBit . implode("\n", $uses) . $sourceCode;
   }
 
-  public function __toString() {
-    return (string) $this->getPhpCode();
+  public function addUsed($type) {
+    $this->usedMap[$type] = $type;
+  }
+
+  protected function namespaceClause() {
+    $namespaceClause = '';
+    if ($this->docBlock->xmlNamespace != '') {
+      $namespace = $this->parent->namespaceToPhp($this->docBlock->xmlNamespace);
+      $namespace = str_replace('.', '\\', $namespace);
+      $namespaceClause = "namespace {$namespace};";
+    }
+    return "<?php\n{$namespaceClause}\n";
+  }
+
+  protected function useClause() {
+    $useClause = '';
+    if ($this->docBlock->xmlNamespace != '') {
+      $use = $this->parent->namespaceToPhp($this->docBlock->xmlNamespace);
+      $use = str_replace('.', '\\', $use);
+      $useClause = "use {$use};";
+    }
+    return $useClause;
   }
 
   /**
@@ -195,7 +172,7 @@ class PHPClassHv extends Common {
     }
 
     // Send the OXM entity header
-    $this->sendClassDocBlock($this->classDocBlock);
+    $this->sendDocBlock($this->docBlock);
 
     // Build the class identification line and send
     $define = "class {$this->phpName}";
@@ -214,10 +191,17 @@ class PHPClassHv extends Common {
       $property->declaration($this->buffer);
     }
 
+    PHPPropertyHv::buildConstructor($this->classProperties, $this->buffer);
+
     // Output all the property getters & setters
     foreach ($this->classProperties as $property) {
-      $property->getter($this->buffer);
       $property->setter($this->buffer);
+      $property->validator($this->buffer);
+      $property->getter($this->buffer);
+      if ($property->maxOccurs!=1) {
+        #$property->adder($this->buffer);
+        #$property->remover($this->buffer);
+      }
     }
 
     // And finish up
@@ -233,7 +217,7 @@ class PHPClassHv extends Common {
    *
    * return string
    */
-  protected function sendClassDocBlock($docs) {
+  protected function sendDocBlock($docs) {
     $this->buffer->lines(array(
       '/**',
       ' * @XmlEntity',

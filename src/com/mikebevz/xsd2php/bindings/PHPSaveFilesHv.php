@@ -7,6 +7,8 @@ namespace com\mikebevz\xsd2php;
 
 class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
 
+  protected $classMap = array(), $phpClasses = array();
+
   /**
    * Return generated PHP source code.
    * Here's where we generate bindings code
@@ -14,23 +16,27 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
    * @return array of string
    */
   protected function getPHP(\DOMDocument $dom) {
-    $sourceCode = array();
-
     $xPath = new \DOMXPath($dom);
+
+    // First collect all the built class objects
     $classes = $xPath->query('//classes/class');
-
     foreach ($classes as $class) {
+
+      // Create the class
       $phpClass = \com\mikebevz\xsd2php\PHPClassHv::factory($this, $dom, $class);
-      $docBlock = $phpClass->classDocBlock;
 
-      $namespaceClause = '';
-      if ($docBlock->xmlNamespace != '') {
-        $namespaceClause = 'namespace ' . $this->namespaceToPhp($docBlock->xmlNamespace) . ';';
-      }
+      // Keep a map of old name to new name
+      $this->classMap[$phpClass->xmlName] = $phpClass->phpName;
 
-      $phpClass->buffer->reset("<?php\n{$namespaceClause}\n");
+      // Save it, such that we can index into it
+      $this->phpClasses[$phpClass->xmlName] = $phpClass;
+    }
 
-      $sourceCode["{$docBlock->xmlName}|{$phpClass->namespace}"] = (string) $phpClass;
+    // Now create the output
+    $sourceCode = array();
+    foreach ($this->phpClasses as $phpClass) {
+      // Create the output code
+      $sourceCode["{$phpClass->xmlName}|{$phpClass->namespace}"] = (string) $phpClass;
     }
 
     return $sourceCode;

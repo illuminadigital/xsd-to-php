@@ -5,7 +5,7 @@ namespace com\mikebevz\xsd2php;
  *
  */
 
-class PHPSaveFilesDefault implements \com\mikebevz\xsd2php\iPHPSaveFiles {
+class PHPSaveFilesDefault extends Common implements \com\mikebevz\xsd2php\iPHPSaveFiles {
 
   protected $xsd2php;
   protected $dest = '';

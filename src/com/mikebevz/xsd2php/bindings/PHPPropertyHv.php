@@ -7,16 +7,22 @@ namespace com\mikebevz\xsd2php;
  * @version 0.0.1
  *
  */
-class PHPPropertyHv extends Common {
+class PHPPropertyHv extends PHPCommonHv {
 
-  static public function factory(PHPSaveFilesDefault $parent, \DOMDocument $dom, \DOMElement $property) {
+  static public function factory(PHPClassHv $myClass, \DOMDocument $dom, \DOMElement $property) {
     $xPath = new \DOMXPath($dom);
-    $phpProperty = new static($parent);
+    $phpProperty = new static($myClass->parent, $myClass);
 
     $phpProperty->name = $property->getAttribute('name');
     $phpProperty->phpName = static::phpIdentifier($phpProperty->name);
     $phpProperty->ucPhpName = ucfirst($phpProperty->phpName);
-    $phpProperty->docBlock = new PHPDocBlock();
+    $phpProperty->varName = "\${$phpProperty->phpName}";
+
+    $phpProperty->type = $property->getAttribute('type');
+    $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
+
+    $phpProperty->namespace = $phpProperty->parent->expandNS($property->getAttribute('namespace'));
+    $phpProperty->typeNamespace = $phpProperty->parent->expandNS($property->getAttribute('typeNamespace'));
 
     $docs = $xPath->query('docs/doc', $property);
     foreach ($docs as $doc) {
@@ -32,7 +38,7 @@ class PHPPropertyHv extends Common {
     }
 
     if ($property->getAttribute('namespace') != '') {
-      $phpProperty->docBlock->xmlNamespace = $phpProperty->parent->expandNS($property->getAttribute('namespace'));
+      $phpProperty->docBlock->xmlNamespace = $phpProperty->namespace;
     }
 
     if ($property->getAttribute('minOccurs') != '') {
@@ -54,80 +60,66 @@ class PHPPropertyHv extends Common {
       }
     }
 
-    if ($property->getAttribute('type') != '' && $property->getAttribute('typeNamespace') == '') {
+    if ($phpProperty->type) {
       $ns = '';
-      // In general it's strange to give to Type name's namespace. Reconsider this part
-      if ($property->getAttribute('namespace') != '' && $property->getAttribute('namespace') != $phpProperty->parent->xsd2php->xsdNs) {
-        if ($property->getAttribute('namespace') == "#default#") {
-          $ns = $phpProperty->parent->namespaceToPhp($phpProperty->parent->xsd2php->targetNamespace);
-        } else {
-          $ns = $phpProperty->parent->namespaceToPhp($phpProperty->parent->expandNS($property->getAttribute('namespace')));
+      if (empty($phpProperty->typeNamespace)) {
+        if (empty($phpProperty->namespace)) {
+          $phpProperty->docBlock->var = $phpProperty->type;
         }
-        $phpProperty->docBlock->var = $ns . '\\' . $property->getAttribute('type');
-      } else {
-        $phpProperty->docBlock->var = $property->getAttribute('type');
+        else {
+          if ($phpProperty->namespace != $phpProperty->parent->xsd2php->xsdNs) {
+            if ($phpProperty->namespace == '#default#') {
+              $ns = $phpProperty->parent->namespaceToPhp($phpProperty->parent->xsd2php->targetNamespace);
+            } else {
+              $ns = $phpProperty->parent->namespaceToPhp($phpProperty->namespace);
+            }
+            $phpProperty->docBlock->var = $ns . '\\' . $phpProperty->type;
+          }
+          else {
+            $phpProperty->docBlock->var = $phpProperty->type;
+          }
+        }
       }
-
-      if ($property->getAttribute('typeNamespace') == $phpProperty->parent->xsd2php->xsdNs) {
-        $phpProperty->docBlock->var = $phpProperty->parent->normalizeType($property->getAttribute('type'));
-      } else {
-        $phpProperty->docBlock->var = $ns . '\\' . $property->getAttribute('type');
+      else {
+        if ($phpProperty->typeNamespace == $phpProperty->parent->xsd2php->xsdNs) {
+          $phpProperty->docBlock->var = $phpProperty->type;
+        } else {
+          $ns = $phpProperty->parent->namespaceToPhp($phpProperty->typeNamespace);
+          $phpProperty->docBlock->var = $ns . '\\' . $phpProperty->type;
+        }
       }
 
       // Is it an array?
       if ($phpProperty->isArray) {
         $maxOccurs = $phpProperty->maxOccurs ? $phpProperty->maxOccurs : '';
-        $phpProperty->docBlock->{'var'} = $phpProperty->docBlock->{'var'} . "[$maxOccurs]";
+        $phpProperty->docBlock->var = $phpProperty->docBlock->var . "[$maxOccurs]";
       }
     }
 
     return $phpProperty;
   }
 
-  /**
-   * Make any changes to turn a supplied identifier into a valid PHP one.
-   *
-   * @param string $raw
-   * @return string valid PHP identifier derived from $raw
-   */
-  static protected function phpIdentifier($raw, $instance = TRUE) {
-    $raw = str_replace(array('-', '/', '\\'), '_', $raw);
-    $raw = array_map('ucfirst', array_filter(explode('_', $raw)));
-    if ($instance) {
-      $s = $raw[0];
-      if (count($raw)>1) {
-        $s = strtolower($s);
-      }
-      else {
-        $c = strtolower(substr($s, 0, 1));
-        $s = $c . substr($s, 1);
-      }
-      $raw[0] = $s;
-    }
+  static public function buildConstructor(array $properties, OutputBuffer $buffer, $indent = "\t") {
+    $indent2 = "$indent\t";
+    $buffer->line('');
 
-    return implode('', $raw);
+    $params = array();
+    foreach ($properties as $property) {
+      $params[] = $property->buildParam();
+    }
+    $buffer->line("{$indent}public function __construct(" . implode(', ', $params) . ') {');
+    foreach ($properties as $property) {
+      $buffer->line("{$indent2}\$this->{$property->phpName} = " . $property->buildValidateCall() . ';');
+    }
+    $buffer->line("{$indent}}");
   }
 
   /**
-   * Raw property name
+   * The PHP name as a var
    *
    * @var string
    */
-  protected $name;
-
-  /**
-   * PHP property name
-   *
-   * @var string
-   */
-  protected $phpName;
-
-  /**
-   * PHP property name uppercased first letter
-   *
-   * @var string
-   */
-  protected $ucPhpName;
+  protected $varName;
 
   /**
    * The type of this property
@@ -141,7 +133,7 @@ class PHPPropertyHv extends Common {
    *
    * @var boolean
    */
-  protected $simpleType;
+  protected $phpType;
 
   /**
    * Tag whether this property is an array
@@ -166,24 +158,14 @@ class PHPPropertyHv extends Common {
   protected $maxOccurs = 1;
 
   /**
-   * PHP Doc Block for this property
-   *
-   * @var object PHPDocBlock
+   * Parent class object
+   * @var object PHPClassHv
    */
-  protected $docBlock;
+  protected $myClass;
 
-  /**
-   * Parent save-files object
-   * @var object PHPSaveFilesDefault
-   */
-  protected $parent;
-
-  protected function __construct(PHPSaveFilesDefault $parent) {
-    $this->parent = $parent;
-  }
-
-  public function __get($var) {
-    return property_exists($this, $var) ? $this->$var : NULL;
+  protected function __construct(PHPSaveFilesDefault $parent, PHPClassHv $myClass) {
+    parent::__construct($parent);
+    $this->myClass = $myClass;
   }
 
   /**
@@ -196,7 +178,7 @@ class PHPPropertyHv extends Common {
   public function declaration(OutputBuffer $buffer, $indent = "\t") {
     $buffer->line('');
     $buffer->lines($this->docBlock->getDocBlock($indent));
-    $buffer->line("{$indent}protected \${$this->phpName}");
+    $buffer->line("{$indent}protected \${$this->phpName};");
   }
 
   /**
@@ -224,13 +206,134 @@ class PHPPropertyHv extends Common {
    *
    */
   public function setter(OutputBuffer $buffer, $indent = "\t") {
-    $buffer->line($indent);
+    $buffer->line('');
+
 
     $buffer->lines(array(
-      "protected function set{$this->ucPhpName}(\${$this->phpName}) {",
-      "{$indent}\$this->{$this->phpName} = \$this->validate(\${$this->phpName});",
+      "public function set{$this->ucPhpName}(" . $this->buildParam() . ") {",
+      "{$indent}\$this->{$this->phpName} = " . $this->buildValidateCall() . ';',
       '}',
-      '',
     ), $indent);
+  }
+
+  protected function buildValidateCall() {
+    return "\$this->validate{$this->ucPhpName}({$this->varName})";
+  }
+
+  protected function buildParam($incArray = TRUE) {
+    $typeHint = $this->buildTypeHint($incArray);
+    return "{$typeHint}{$this->varName}";
+  }
+
+  /**
+   * Buffer property Getter function
+   *
+   * @param object $buffer The output buffer to use
+   * @param string $indent Indentation
+   *
+   */
+  public function validator(OutputBuffer $buffer, $indent = "\t") {
+    $indent2 = "$indent\t";
+    $indent3 = "$indent\t\t";
+    $typeHint = $this->buildTypeHint();
+
+    $buffer->line('');
+    $buffer->line("{$indent}protected function validate{$this->ucPhpName}({$typeHint}{$this->varName}) {");
+
+    // Array bounds check:
+    if ($this->maxOccurs != 1) {
+      $buffer->lines($this->buildBoundsCheck("$indent\t"));
+    }
+    else {
+      // Build the validation for simple php types
+      $buffer->lines($this->buildPHPTypeCheck($this->type, "$indent\t"));
+    }
+
+    $buffer->lines(array("{$indent}return {$this->varName};",
+      '}',
+    ), $indent);
+  }
+
+  protected function buildTypeHint($incArray = TRUE) {
+    $typeHint = '';
+
+    if ($incArray && $this->maxOccurs!=1) {
+      $typeHint = 'array';
+    }
+    else if (!empty($this->parent->classMap[$this->type])) {
+      $typeHint = $this->parent->classMap[$this->type];
+      $this->myClass->addUsed($this->type);
+    }
+
+    return $typeHint ? "$typeHint " : '';
+  }
+
+  protected function buildPHPTypeCheck($type, $indent, $varName = NULL) {
+    $indent2 = "$indent\t";
+    if (!$varName) {
+      $varName = $this->varName;
+    }
+    // Build the validation for simple php types
+    if (empty($this->parent->classMap[$type])) {
+      return array(
+        "{$indent}if (is_{$this->phpType}({$varName})) {",
+        "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
+        "{$indent}}",
+      );
+    }
+    return array();
+  }
+
+  protected function buildObjectTypeCheck($type, $indent, $varName = NULL) {
+    $indent2 = "$indent\t";
+    if (!$varName) {
+      $varName = $this->varName;
+    }
+    // Build the validation for simple php types
+    if (!empty($this->parent->classMap[$type])) {
+      return array(
+        "{$indent}if ({$varName} typeof {$this->parent->classMap[$type]}) {",
+        "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
+        "{$indent}}",
+      );
+    }
+    return array();
+  }
+
+  protected function buildBoundsCheck($indent) {
+    $indent2 = "$indent\t";
+
+    // Check minimum
+    $output = array(
+      "{$indent}\$count = count($this->varName);",
+      "{$indent}if (\$count < {$this->minOccurs}) {",
+      "{$indent2}throw new \\Exception(sprintf('Supplied %s array has less than the required number (%d) of entries.', '{$this->phpName}', {$this->minOccurs}));",
+      "{$indent}}",
+    );
+
+    if ($this->maxOccurs>1) {
+      // Check maximum (unless unbounded)
+      $output = array_merge($output, array(
+        "{$indent}if (\$count > {$this->maxOccurs}) {",
+        "{$indent2}throw new \\Exception(sprintf('Supplied %s array has more than the required number (%d) of entries.', '{$this->phpName}', {$this->maxOccurs}));",
+        "{$indent}}",
+      ));
+    }
+
+    // Check types of every item
+    $typeHint = $this->buildTypeHint(FALSE);
+    if ($typeHint) {
+      $output[] = "{$indent}foreach ({$this->varName} as \$entry) {";
+      $output = array_merge($output, $this->buildObjectTypeCheck($this->type, $indent2, '$entry'));
+      $output[] = "{$indent}}";
+    }
+    else {
+      $output[] = "{$indent}foreach ({$this->varName} as \$entry) {";
+      $output = array_merge($output, $this->buildPHPTypeCheck($this->type, $indent2, '$entry'));
+      $output[] = "{$indent}}";
+    }
+
+
+    return $output;
   }
 }

@@ -7,7 +7,7 @@ namespace com\mikebevz\xsd2php;
  * @version 0.0.1
  *
  */
-class PHPDocBlock extends Common {
+class PHPDocBlock {
 
   protected $docs = array();
 
