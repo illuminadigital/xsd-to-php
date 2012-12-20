@@ -29,6 +29,14 @@ class PHPPropertyHv extends PHPCommonHv {
       $phpProperty->docBlock->{$doc->getAttribute('name')} = $doc->nodeValue;
     }
 
+    $restrictions = $xPath->query('restrictions/restriction', $property);
+    foreach ($restrictions as $restriction) {
+      $phpProperty->restrictions[] = \com\mikebevz\xsd2php\PHPRestrict::factory($dom, $property, $restriction);
+    }
+    if (!empty($phpProperty->restrictions)) {
+      #println($phpProperty->restrictions, __METHOD__);
+    }
+
     if ($property->getAttribute('name') != '') {
       $phpProperty->docBlock->xmlName = $property->getAttribute('name');
     }
@@ -158,6 +166,13 @@ class PHPPropertyHv extends PHPCommonHv {
   protected $maxOccurs = 1;
 
   /**
+   * Array of restriction objects
+   *
+   * @var object PHPRestrict
+   */
+  protected $restrictions = array();
+
+  /**
    * Parent class object
    * @var object PHPClassHv
    */
@@ -242,11 +257,15 @@ class PHPPropertyHv extends PHPCommonHv {
 
     // Array bounds check:
     if ($this->maxOccurs != 1) {
-      $buffer->lines($this->buildBoundsCheck("$indent\t"));
+      $buffer->lines($this->buildBoundsCheck($indent2));
     }
     else {
       // Build the validation for simple php types
-      $buffer->lines($this->buildPHPTypeCheck($this->type, "$indent\t"));
+      $buffer->lines($this->buildPHPTypeCheck($this->type, $indent2));
+    }
+
+    foreach ($this->restrictions as $restriction) {
+      $restriction->buildValidator($buffer, $this, $indent2);
     }
 
     $buffer->lines(array("{$indent}return {$this->varName};",

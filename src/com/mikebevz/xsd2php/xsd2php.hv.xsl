@@ -96,30 +96,30 @@
 						<xsl:when test="@namespace">
 							<class debug="1.3-1" name="{@name}" type="{$type}"
 								namespace="{@namespace}">
+								<property debug="Dummy-Property-1" xmlType="element"
+									name="value" type="{$type}" namespace="#default#"
+									typeNamespace="#default#">
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 								<xsl:apply-templates
 									select="*[local-name()='annotation' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
-								<property debug="Dummy-Property-1" xmlType="element"
-									name="value" type="{$type}" namespace="#default#"
-									typeNamespace="#default#">
 								</property>
 							</class>
 						</xsl:when>
 						<xsl:otherwise>
 							<class debug="1.3-2 - ERROR No Namespace" name="{@name}"
 								type="{$type}" namespace="{@namespace}">
+								<property debug="Dummy-Property-2" xmlType="element"
+									name="value" type="{$type}" namespace="#default#"
+									typeNamespace="#default#">
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 								<xsl:apply-templates
 									select="*[local-name()='annotation' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
-								<property debug="Dummy-Property-2" xmlType="element"
-									name="value" type="{$type}" namespace="#default#"
-									typeNamespace="#default#">
 								</property>
 							</class>
 						</xsl:otherwise>
@@ -161,7 +161,12 @@
 					name="{substring-after(@ref,':')}" type="{substring-after(@ref,':')}"
 					namespace="{substring-before(@ref,':')}" minOccurs="{@minOccurs}"
 					maxOccurs="{@maxOccurs}">
-					<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 				</property>
 			</xsl:when>
 			<xsl:when test="@ref and not(contains(@ref,':'))">
@@ -170,13 +175,23 @@
 						<property debug="refElement-ParentNS" xmlType="element"
 							name="{@ref}" type="{@ref}" minOccurs="{@minOccurs}" namespace="{../../@namespace}"
 							maxOccurs="{@maxOccurs}">
-							<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 					</xsl:when>
 					<xsl:otherwise>
 						<property debug="refElement-NoNS" xmlType="element" name="{@ref}"
 							type="{@ref}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
-							<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 					</xsl:otherwise>
 				</xsl:choose>
@@ -190,7 +205,12 @@
 									xmlType="element" name="{@name}" type="{substring-after(@type, ':')}"
 									namespace="{../../@namespace}" minOccurs="{@minOccurs}"
 									typeNamespace="{substring-before(@type, ':')}" maxOccurs="{@maxOccurs}">
-									<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 								</property>
 							</xsl:when>
 							<xsl:otherwise>
@@ -198,7 +218,12 @@
 									xmlType="element" name="{@name}" type="{substring-after(@type, ':')}"
 									namespace="#default#" minOccurs="{@minOccurs}"
 									typeNamespace="{substring-before(@type, ':')}" maxOccurs="{@maxOccurs}">
-									<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 								</property>
 							</xsl:otherwise>
 						</xsl:choose>
@@ -207,7 +232,12 @@
 						<property debug="nameElement-TypeNoColon" xmlType="element"
 							name="{@name}" type="{@type}" namespace="#default#"
 							typeNamespace="#default#" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
-							<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 
 					</xsl:otherwise>
@@ -344,13 +374,23 @@
 							name="{@name}" type="{substring-after(@type, ':')}"
 							typeNamespace="{substring-before(@type, ':')}" default="{@default}"
 							use="{@use}">
-							<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 					</xsl:when>
 					<xsl:otherwise>
 						<property debug="attribute-TypeNoNs" xmlType="attribute"
 							name="{@name}" type="{@type}" default="{@default}" use="{@use}">
-							<xsl:apply-templates />
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 					</xsl:otherwise>
 
@@ -365,11 +405,23 @@
 						<property debug="attribute-Ref-1" xmlType="attribute"
 							name="{@ref}" type="{substring-after($attRef,':')}" namespace="{substring-before($attRef,':')}"
 							default="{@default}" use="{@use}">
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 					</xsl:when>
 					<xsl:otherwise>
 						<property debug="attribute-Ref-2" xmlType="attribute"
 							name="{@ref}" type="{$attRef}" default="{@default}" use="{@use}">
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 					</xsl:otherwise>
 				</xsl:choose>
