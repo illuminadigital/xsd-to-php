@@ -94,6 +94,28 @@ class PHPRestrict {
     ));
   }
 
+  public function minLengthBuildValidator(OutputBuffer $buffer, PHPPropertyHv $property, $indent = '') {
+    $indent2 = "{$indent}\t";
+    $buffer->line();
+
+    $buffer->lines(array(
+      "{$indent}if (strlen({$property->varName}) < {$this->value}) {",
+      "{$indent2}throw new \\Exception(sprintf('Supplied %s value was shorter than the minimum (%d)', '{$property->myClass->name}', {$this->value}));",
+      "{$indent}}",
+    ));
+  }
+
+  public function maxLengthBuildValidator(OutputBuffer $buffer, PHPPropertyHv $property, $indent = '') {
+    $indent2 = "{$indent}\t";
+    $buffer->line();
+
+    $buffer->lines(array(
+      "{$indent}if (strlen({$property->varName}) > {$this->value}) {",
+      "{$indent2}throw new \\Exception(sprintf('Supplied %s value was longer than the maximum (%d)', '{$property->myClass->name}', {$this->value}));",
+      "{$indent}}",
+    ));
+  }
+
   public function patternBuildValidator(OutputBuffer $buffer, PHPPropertyHv $property, $indent = '') {
     $indent2 = "{$indent}\t";
     $buffer->line();
