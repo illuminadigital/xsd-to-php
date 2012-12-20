@@ -10,6 +10,7 @@ class PHPSaveFilesDefault extends Common implements \com\mikebevz\xsd2php\iPHPSa
   protected $xsd2php;
   protected $dest = '';
   protected $nocreate = FALSE;
+  protected $binding = 'default';
 
   public function __construct(Xsd2Php $xsd2php, array $options  = array()) {
     $this->xsd2php = $xsd2php;

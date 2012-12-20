@@ -57,7 +57,12 @@ class PHPClassHv extends PHPCommonHv {
       }
     }
 
+    // Fetch all the properties for this
     $properties = $xPath->query('property', $class);
+    if (!empty($properties)) {
+      // Oh noes, there aren't any. Must build one...
+
+    }
     foreach($properties as $property) {
       $phpClass->classProperties[] = \com\mikebevz\xsd2php\PHPPropertyHv::factory($phpClass, $dom, $property);
     }

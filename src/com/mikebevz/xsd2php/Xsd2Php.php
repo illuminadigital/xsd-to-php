@@ -51,10 +51,18 @@ class Xsd2Php extends Common
   protected $xmlForPhp;
 
   /**
-   * Show debug info
+   * The binding value
+   *
+   * @var string
+   */
+  public $binding = 'default';
+
+  /**
+   * The class that performs the final conversion
+   *
    * @var interface iPHPSaveFiles
    */
-  public $binding;
+  public $saveFiles;
 
   /**
    * Show debug info
@@ -182,7 +190,7 @@ class Xsd2Php extends Common
     $this->dom = $xsd = $this->loadIncludes($this->dom, dirname($this->xsdFile), $this->targetNamespace);
     $this->dom = $this->loadImports($this->dom, $this->xsdFile);
 
-    $this->binding = new $binding($this, $options);
+    $this->saveFiles = new $binding($this, $options);
     $this->debugln($this->shortNamespaces);
   }
 
@@ -446,7 +454,7 @@ class Xsd2Php extends Common
         LIBXML_NOENT | LIBXML_XINCLUDE);
     }
 
-    $this->binding->savePhpFiles($dom);
+    $this->saveFiles->savePhpFiles($dom);
   }
 
   /**
@@ -460,11 +468,15 @@ class Xsd2Php extends Common
     try {
       $xsl    = new \XSLTProcessor();
       $xslDom = new \DOMDocument();
-      $xslDom->load(dirname(__FILE__) . "/xsd2php2.xsl");
+      $xslFile = '/xsd2php.' . strtolower($this->binding) . '.xsl';
+      $xslDom->load(dirname(__FILE__) . $xslFile);
       $xsl->registerPHPFunctions();
       $xsl->importStyleSheet($xslDom);
       $dom = $xsl->transformToDoc($this->dom);
       $dom->formatOutput = true;
+
+      $fname = implode('.', array_slice(explode('.', basename($this->xsdFile)), 0, -1));
+      file_put_contents(dirname(__FILE__) . sprintf('/tmp/%s.xml', $fname), $dom->saveXML() . "\n");
 
       return $dom;
     }
