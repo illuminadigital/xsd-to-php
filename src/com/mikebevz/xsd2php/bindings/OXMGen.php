@@ -30,10 +30,11 @@ class OXMGen {
     }
 
     if ($phpProperty->dummyProperty=='true') {
-      $modifiers['name'] = $phpProperty->myClass->xmlName;
+      $modifiers['xml-name'] = $phpProperty->myClass->name;
       $phpProperty->docBlock->XmlField = static::docBlockPropertyModifiers($modifiers);
     }
     else {
+      $modifiers['xml-name'] = $phpProperty->name;
       $phpProperty->docBlock->XmlElement = static::docBlockPropertyModifiers($modifiers);
     }
   }

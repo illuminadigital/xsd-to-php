@@ -49,14 +49,16 @@ class PHPClassHv extends PHPCommonHv {
     }
 
     $docs = $xPath->query('docs/doc', $class);
+    $text  = array();
     foreach ($docs as $doc) {
-      $field = "xml" . $doc->getAttribute('name');
+      $field = ucfirst(strtolower($doc->getAttribute('name')));
       if ($doc->nodeValue != '') {
-        $phpClass->info->$field = $doc->nodeValue;
+        $text[$field] = trim($doc->nodeValue);
       } elseif ($doc->getAttribute('value') != '') {
-        $phpClass->info->$field = $doc->getAttribute('value');
+        $text[$field] = trim($doc->getAttribute('value'));
       }
     }
+    $phpClass->textInfo = $text;
 
     // Fetch all the properties for this
     $properties = $xPath->query('property', $class);
@@ -109,6 +111,12 @@ class PHPClassHv extends PHPCommonHv {
   protected $usedMap = array();
 
   /**
+   * An array of informational strings
+   * @var array of string
+   */
+  protected $textInfo = array();
+
+  /**
    * The output buffer
    * @var object OutputBuffer
    */
@@ -122,14 +130,7 @@ class PHPClassHv extends PHPCommonHv {
   public function __toString() {
     $sourceCode =  (string) $this->getPhpCode();
 
-    // Build the namespace clause for the file...
-    $namespaceClause = '';
-    if ($this->info->xmlNamespace != '') {
-      $namespace = $this->parent->namespaceToPhp($this->info->xmlNamespace);
-      $namespace = str_replace('.', '\\', $namespace);
-      $namespaceClause = "namespace {$namespace};";
-    }
-    $firstBit = "<?php\n{$namespaceClause}\n";
+    $namespaceClause = $this->namespaceClause();
 
     // Now collect the namespaces to be used...
 
@@ -138,7 +139,7 @@ class PHPClassHv extends PHPCommonHv {
       $uses[] = $this->parent->phpClasses[$type]->useClause();
     }
 
-    return $firstBit . implode("\n", $uses) . $sourceCode;
+    return "$namespaceClause\n" . implode("\n", $uses) . "\n$sourceCode";
   }
 
   public function addUsed($type) {
@@ -148,7 +149,7 @@ class PHPClassHv extends PHPCommonHv {
   protected function namespaceClause() {
     $namespaceClause = '';
     if ($this->info->xmlNamespace != '') {
-      $namespace = $this->parent->namespaceToPhp($this->info->xmlNamespace);
+      $namespace = $this->parent->namespaceToPhp($this->phpName);
       $namespace = str_replace('.', '\\', $namespace);
       $namespaceClause = "namespace {$namespace};";
     }
@@ -158,7 +159,7 @@ class PHPClassHv extends PHPCommonHv {
   protected function useClause() {
     $useClause = '';
     if ($this->xmlNamespace != '') {
-      $use = $this->parent->namespaceToPhp($this->info->xmlNamespace);
+      $use = $this->parent->namespaceToPhp($this->xmlNamespace);
       $use = str_replace('.', '\\', $use);
       $useClause = "use {$use}\\{$this->phpName};";
     }
@@ -189,6 +190,12 @@ class PHPClassHv extends PHPCommonHv {
       }
     }
     $this->buffer->line("{$define} {");
+
+    // Output the annotation content for this class...
+    $this->buffer->line("\t/**");
+    $this->buffer->lines($this->textInfo, "\t * ");
+    $this->buffer->line("'\t */");
+
 
     // Output all the property enumerations
     foreach ($this->classProperties as $property) {

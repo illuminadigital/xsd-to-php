@@ -116,11 +116,11 @@ class PHPPropertyHv extends PHPCommonHv {
 
     $params = array();
     foreach ($properties as $property) {
-      $params[] = $property->buildParam();
+      $params[] = $property->buildParam(TRUE, TRUE);
     }
     $buffer->line("{$indent}public function __construct(" . implode(', ', $params) . ') {');
     foreach ($properties as $property) {
-      $buffer->line("{$indent2}\$this->{$property->phpName} = " . $property->buildValidateCall() . ';');
+      $buffer->line("{$indent2}\$this->{$property->phpName} = " . $property->buildValidateCall(TRUE) . ';');
     }
     $buffer->line("{$indent}}");
   }
@@ -252,13 +252,17 @@ class PHPPropertyHv extends PHPCommonHv {
     ), $indent);
   }
 
-  protected function buildValidateCall() {
-    return "\$this->validate{$this->ucPhpName}({$this->varName})";
+  protected function buildValidateCall($incNull = FALSE) {
+    $nullCheck = '';
+    if ($incNull) {
+      $nullCheck = "({$this->varName}===NULL) ? NULL : ";
+    }
+    return "{$nullCheck}\$this->validate{$this->ucPhpName}({$this->varName})";
   }
 
-  protected function buildParam($incArray = TRUE) {
+  protected function buildParam($incArray = TRUE, $incNull = FALSE) {
     $typeHint = $this->buildTypeHint($incArray);
-    return "{$typeHint}{$this->varName}";
+    return "{$typeHint}{$this->varName}" . ($incNull?' = NULL':'');
   }
 
   /**
