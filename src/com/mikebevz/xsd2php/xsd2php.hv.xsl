@@ -318,12 +318,11 @@
 	<xsl:template
 		match="*[local-name()='enumeration' and namespace-uri()='http://www.w3.org/2001/XMLSchema']">
 		<xsl:variable name="tag" select="local-name()" />
-		<xsl:variable name="summary" select="*[local-name()='summary']" />
-		<restriction name="{$tag}" value="{@value}">
+		<enumeration value="{@value}">
 			<xsl:apply-templates
 				select="*[local-name()='annotation' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
-		</restriction>
+		</enumeration>
 	</xsl:template>
 
 	<!-- Simplecontent -->

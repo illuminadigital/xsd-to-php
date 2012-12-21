@@ -191,6 +191,11 @@ class PHPClassHv extends PHPCommonHv {
     }
     $this->buffer->line("{$define} {");
 
+    // Output all the property enumerations
+    foreach ($this->classProperties as $property) {
+      $property->enumeration($this->buffer);
+    }
+
     // Output all the property declarations
     foreach ($this->classProperties as $property) {
       $property->declaration($this->buffer);

@@ -77,7 +77,7 @@ class PHPRestrict {
     $buffer->line();
 
     $buffer->lines(array(
-      "{$indent}if ({$property->varName} < {$this->value}) {",
+      "{$indent}if ({$property->varName} <= {$this->value}) {",
       "{$indent2}throw new \\Exception(sprintf('Supplied %s value was less than/equal to the minimum (%d)', '{$property->myClass->name}', {$this->value}));",
       "{$indent}}",
     ));
@@ -88,7 +88,7 @@ class PHPRestrict {
     $buffer->line();
 
     $buffer->lines(array(
-      "{$indent}if ({$property->varName} > {$this->value}) {",
+      "{$indent}if ({$property->varName} >= {$this->value}) {",
       "{$indent2}throw new \\Exception(sprintf('Supplied %s value was greater than/equal to the maximum (%d)', '{$property->myClass->name}', {$this->value}));",
       "{$indent}}",
     ));

@@ -29,12 +29,11 @@ class PHPPropertyHv extends PHPCommonHv {
       $phpProperty->docBlock->{$doc->getAttribute('name')} = $doc->nodeValue;
     }
 
+    $phpProperty->enumeration = \com\mikebevz\xsd2php\PHPEnumeration::factory($dom, $property, $phpProperty);
+
     $restrictions = $xPath->query('restrictions/restriction', $property);
     foreach ($restrictions as $restriction) {
       $phpProperty->restrictions[] = \com\mikebevz\xsd2php\PHPRestrict::factory($dom, $property, $restriction);
-    }
-    if (!empty($phpProperty->restrictions)) {
-      #println($phpProperty->restrictions, __METHOD__);
     }
 
     if ($property->getAttribute('name') != '') {
@@ -166,6 +165,13 @@ class PHPPropertyHv extends PHPCommonHv {
   protected $maxOccurs = 1;
 
   /**
+   * An enumeration object
+   *
+   * @var object PHPEnumeration
+   */
+  protected $enumeration;
+
+  /**
    * Array of restriction objects
    *
    * @var object PHPRestrict
@@ -181,6 +187,21 @@ class PHPPropertyHv extends PHPCommonHv {
   protected function __construct(PHPSaveFilesDefault $parent, PHPClassHv $myClass) {
     parent::__construct($parent);
     $this->myClass = $myClass;
+  }
+
+  public function __get($var) {
+    return property_exists($this, $var) ? $this->$var : NULL;
+  }
+
+  /**
+   * Buffer property enumeration with indent specified
+   *
+   * @param object $buffer The output buffer to use
+   * @param array $indent Indentation in tabs
+   *
+   */
+  public function enumeration(OutputBuffer $buffer, $indent = "\t") {
+    $this->enumeration->declaration($buffer, $indent);
   }
 
   /**
@@ -264,11 +285,15 @@ class PHPPropertyHv extends PHPCommonHv {
       $buffer->lines($this->buildPHPTypeCheck($this->type, $indent2));
     }
 
+    $this->enumeration->buildValidator($buffer, $indent2);
+
     foreach ($this->restrictions as $restriction) {
       $restriction->buildValidator($buffer, $this, $indent2);
     }
 
-    $buffer->lines(array("{$indent}return {$this->varName};",
+    $buffer->lines(array(
+      '',
+      "{$indent}return {$this->varName};",
       '}',
     ), $indent);
   }
