@@ -17,6 +17,7 @@ class PHPEnumeration {
     foreach ($enumerations as $enumeration) {
       $phpEnumeration->items[] = \com\mikebevz\xsd2php\PHPEnumerationItem::factory($dom, $property, $enumeration);
     }
+    $phpEnumeration->items = array_filter($phpEnumeration->items);
 
     return $phpEnumeration;
   }
@@ -47,6 +48,10 @@ class PHPEnumeration {
   }
 
   public function buildValidator(OutputBuffer $buffer, $indent = '') {
+    if (empty($this->items)) {
+      return;
+    }
+
     $indent2 = "{$indent}\t";
     $buffer->line();
 

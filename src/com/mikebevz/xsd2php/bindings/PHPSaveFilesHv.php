@@ -18,7 +18,7 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
   protected function getPHP(\DOMDocument $dom) {
     $xPath = new \DOMXPath($dom);
 
-    // First collect all the built class objects
+    // First build all the class objects
     $classes = $xPath->query('//classes/class');
     foreach ($classes as $class) {
 
@@ -36,7 +36,7 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
     $sourceCode = array();
     foreach ($this->phpClasses as $phpClass) {
       // Create the output code
-      $sourceCode["{$phpClass->xmlName}|{$phpClass->namespace}"] = (string) $phpClass;
+      $sourceCode["{$phpClass->phpName}|{$phpClass->namespace}"] = (string) $phpClass;
     }
 
     return $sourceCode;

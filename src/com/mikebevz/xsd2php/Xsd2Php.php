@@ -466,8 +466,8 @@ class Xsd2Php extends Common
    */
   public function getXML() {
     try {
-      $xsl    = new \XSLTProcessor();
       $xslDom = new \DOMDocument();
+      $xsl    = new \XSLTProcessor();
       $xslFile = '/xsd2php.' . strtolower($this->binding) . '.xsl';
       $xslDom->load(dirname(__FILE__) . $xslFile);
       $xsl->registerPHPFunctions();

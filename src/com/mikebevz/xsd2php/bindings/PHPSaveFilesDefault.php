@@ -53,8 +53,8 @@ class PHPSaveFilesDefault extends Common implements \com\mikebevz\xsd2php\iPHPSa
       $keys = explode("|", $fullkey);
       $key = $keys[0];
       $namespace = $this->namespaceToPath($keys[1]);
-      $targetDir = $this->dest . DIRECTORY_SEPARATOR . $namespace;
-      if (!fileexists($targetDir)) {
+      $targetDir = $this->dest . DIRECTORY_SEPARATOR . str_replace('.', DIRECTORY_SEPARATOR, $namespace);
+      if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
       }
       file_put_contents($targetDir . DIRECTORY_SEPARATOR . $key . '.php', $value);

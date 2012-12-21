@@ -38,34 +38,33 @@ class PHPClassHv extends PHPCommonHv {
       }
     }
 
-    $phpClass->docBlock->xmlNamespace = strtolower($phpClass->parent->expandNS($phpClass->namespace));
-    $phpClass->docBlock->xmlType      = $phpClass->type;
-    $phpClass->docBlock->xmlName      = $phpClass->name;
+    $phpClass->info->dummyProperty = $class->getAttribute('dummyProperty');
+    $phpClass->info->xmlNamespace = strtolower($phpClass->parent->expandNS($phpClass->namespace));
+    $phpClass->info->xmlType      = $phpClass->type;
+    $phpClass->info->xmlName      = $phpClass->name;
     if ($phpClass->namespace != '') {
-      $phpClass->docBlock->var = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($phpClass->namespace))."\\".$phpClass->name;
+      $phpClass->info->var = $phpClass->parent->namespaceToPhp($phpClass->parent->expandNS($phpClass->namespace))."\\".$phpClass->name;
     } else {
-      $phpClass->docBlock->var = $phpClass->name;
+      $phpClass->info->var = $phpClass->name;
     }
 
     $docs = $xPath->query('docs/doc', $class);
     foreach ($docs as $doc) {
       $field = "xml" . $doc->getAttribute('name');
       if ($doc->nodeValue != '') {
-        $phpClass->docBlock->$field = $doc->nodeValue;
+        $phpClass->info->$field = $doc->nodeValue;
       } elseif ($doc->getAttribute('value') != '') {
-        $phpClass->docBlock->$field = $doc->getAttribute('value');
+        $phpClass->info->$field = $doc->getAttribute('value');
       }
     }
 
     // Fetch all the properties for this
     $properties = $xPath->query('property', $class);
-    if (!empty($properties)) {
-      // Oh noes, there aren't any. Must build one...
-
-    }
     foreach($properties as $property) {
       $phpClass->classProperties[] = \com\mikebevz\xsd2php\PHPPropertyHv::factory($phpClass, $dom, $property);
     }
+
+    OXMGen::docBlockClass($dom, $class, $phpClass);
 
     return $phpClass;
   }
@@ -125,8 +124,8 @@ class PHPClassHv extends PHPCommonHv {
 
     // Build the namespace clause for the file...
     $namespaceClause = '';
-    if ($this->docBlock->xmlNamespace != '') {
-      $namespace = $this->parent->namespaceToPhp($this->docBlock->xmlNamespace);
+    if ($this->info->xmlNamespace != '') {
+      $namespace = $this->parent->namespaceToPhp($this->info->xmlNamespace);
       $namespace = str_replace('.', '\\', $namespace);
       $namespaceClause = "namespace {$namespace};";
     }
@@ -148,8 +147,8 @@ class PHPClassHv extends PHPCommonHv {
 
   protected function namespaceClause() {
     $namespaceClause = '';
-    if ($this->docBlock->xmlNamespace != '') {
-      $namespace = $this->parent->namespaceToPhp($this->docBlock->xmlNamespace);
+    if ($this->info->xmlNamespace != '') {
+      $namespace = $this->parent->namespaceToPhp($this->info->xmlNamespace);
       $namespace = str_replace('.', '\\', $namespace);
       $namespaceClause = "namespace {$namespace};";
     }
@@ -158,10 +157,10 @@ class PHPClassHv extends PHPCommonHv {
 
   protected function useClause() {
     $useClause = '';
-    if ($this->docBlock->xmlNamespace != '') {
-      $use = $this->parent->namespaceToPhp($this->docBlock->xmlNamespace);
+    if ($this->xmlNamespace != '') {
+      $use = $this->parent->namespaceToPhp($this->info->xmlNamespace);
       $use = str_replace('.', '\\', $use);
-      $useClause = "use {$use};";
+      $useClause = "use {$use}\\{$this->phpName};";
     }
     return $useClause;
   }
@@ -176,8 +175,8 @@ class PHPClassHv extends PHPCommonHv {
       $this->buffer->line("use {$this->extendsNamespace}");
     }
 
-    // Send the OXM entity header
-    $this->sendDocBlock($this->docBlock);
+    // Send the class docBlock
+    $this->sendDocBlock($this->buffer);
 
     // Build the class identification line and send
     $define = "class {$this->phpName}";
@@ -217,21 +216,6 @@ class PHPClassHv extends PHPCommonHv {
     // And finish up
     $this->buffer->line("} // end class {$this->phpName}");
 
-    return $this->buffer;
-  }
-
-  /**
-   * Send Class Doc block to output buffer
-   *
-   * @param array  $docs   Array of docs
-   *
-   * return string
-   */
-  protected function sendDocBlock($docs) {
-    $this->buffer->lines(array(
-      '/**',
-      ' * @XmlEntity',
-      ' */',
-    ));
+    return (string) $this->buffer;
   }
 }

@@ -26,7 +26,7 @@ class PHPPropertyHv extends PHPCommonHv {
 
     $docs = $xPath->query('docs/doc', $property);
     foreach ($docs as $doc) {
-      $phpProperty->docBlock->{$doc->getAttribute('name')} = $doc->nodeValue;
+      $phpProperty->info->{$doc->getAttribute('name')} = $doc->nodeValue;
     }
 
     $phpProperty->enumeration = \com\mikebevz\xsd2php\PHPEnumeration::factory($dom, $property, $phpProperty);
@@ -37,32 +37,32 @@ class PHPPropertyHv extends PHPCommonHv {
     }
 
     if ($property->getAttribute('name') != '') {
-      $phpProperty->docBlock->xmlName = $property->getAttribute('name');
+      $phpProperty->info->xmlName = $property->getAttribute('name');
     }
 
     if ($property->getAttribute('xmlType') != '') {
-      $phpProperty->docBlock->xmlType = $property->getAttribute('xmlType');
+      $phpProperty->info->xmlType = $property->getAttribute('xmlType');
     }
 
     if ($property->getAttribute('namespace') != '') {
-      $phpProperty->docBlock->xmlNamespace = $phpProperty->namespace;
+      $phpProperty->info->xmlNamespace = $phpProperty->namespace;
     }
 
     if ($property->getAttribute('minOccurs') != '') {
       $phpProperty->minOccurs = (int) ($property->getAttribute('minOccurs'));
-      $phpProperty->docBlock->xmlMinOccurs = $phpProperty->minOccurs;
+      $phpProperty->info->xmlMinOccurs = $phpProperty->minOccurs;
     }
 
     if ($property->getAttribute('maxOccurs') != '') {
       $maxOccurs = $property->getAttribute('maxOccurs');
       if (is_numeric($maxOccurs)) {
         $phpProperty->maxOccurs = (int) $maxOccurs;
-        $phpProperty->docBlock->xmlMaxOccurs = $phpProperty->maxOccurs;
+        $phpProperty->info->xmlMaxOccurs = $phpProperty->maxOccurs;
         $phpProperty->isArray = ($phpProperty->maxOccurs != 1);
       }
       elseif ($maxOccurs == 'unbounded') {
         $phpProperty->maxOccurs = 0;
-        $phpProperty->docBlock->xmlMaxOccurs = $maxOccurs;
+        $phpProperty->info->xmlMaxOccurs = $maxOccurs;
         $phpProperty->isArray = true;
       }
     }
@@ -71,7 +71,7 @@ class PHPPropertyHv extends PHPCommonHv {
       $ns = '';
       if (empty($phpProperty->typeNamespace)) {
         if (empty($phpProperty->namespace)) {
-          $phpProperty->docBlock->var = $phpProperty->type;
+          $phpProperty->info->var = $phpProperty->type;
         }
         else {
           if ($phpProperty->namespace != $phpProperty->parent->xsd2php->xsdNs) {
@@ -80,28 +80,32 @@ class PHPPropertyHv extends PHPCommonHv {
             } else {
               $ns = $phpProperty->parent->namespaceToPhp($phpProperty->namespace);
             }
-            $phpProperty->docBlock->var = $ns . '\\' . $phpProperty->type;
+            $phpProperty->info->var = $ns . '\\' . $phpProperty->type;
           }
           else {
-            $phpProperty->docBlock->var = $phpProperty->type;
+            $phpProperty->info->var = $phpProperty->type;
           }
         }
       }
       else {
         if ($phpProperty->typeNamespace == $phpProperty->parent->xsd2php->xsdNs) {
-          $phpProperty->docBlock->var = $phpProperty->type;
+          $phpProperty->info->var = $phpProperty->type;
         } else {
           $ns = $phpProperty->parent->namespaceToPhp($phpProperty->typeNamespace);
-          $phpProperty->docBlock->var = $ns . '\\' . $phpProperty->type;
+          $phpProperty->info->var = $ns . '\\' . $phpProperty->type;
         }
       }
 
       // Is it an array?
       if ($phpProperty->isArray) {
         $maxOccurs = $phpProperty->maxOccurs ? $phpProperty->maxOccurs : '';
-        $phpProperty->docBlock->var = $phpProperty->docBlock->var . "[$maxOccurs]";
+        $phpProperty->info->var = $phpProperty->info->var . "[$maxOccurs]";
       }
     }
+
+    $phpProperty->dummyProperty = $myClass->dummyProperty;
+
+    OXMGen::docBlockProperty($dom, $property, $phpProperty);
 
     return $phpProperty;
   }
@@ -189,10 +193,6 @@ class PHPPropertyHv extends PHPCommonHv {
     $this->myClass = $myClass;
   }
 
-  public function __get($var) {
-    return property_exists($this, $var) ? $this->$var : NULL;
-  }
-
   /**
    * Buffer property enumeration with indent specified
    *
@@ -213,7 +213,7 @@ class PHPPropertyHv extends PHPCommonHv {
    */
   public function declaration(OutputBuffer $buffer, $indent = "\t") {
     $buffer->line('');
-    $buffer->lines($this->docBlock->getDocBlock($indent));
+    $this->sendDocBlock($buffer, $indent);
     $buffer->line("{$indent}protected \${$this->phpName};");
   }
 

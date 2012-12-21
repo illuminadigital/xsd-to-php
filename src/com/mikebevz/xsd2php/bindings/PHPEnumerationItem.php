@@ -22,7 +22,7 @@ class PHPEnumerationItem {
     }
     $phpEnumerationItem->description = implode(' ', $text);
 
-    return $phpEnumerationItem;
+    return empty($phpEnumerationItem->value) ? NULL : $phpEnumerationItem;
   }
 
   protected $value;

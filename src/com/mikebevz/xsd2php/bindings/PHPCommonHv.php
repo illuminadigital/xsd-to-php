@@ -73,7 +73,18 @@ class PHPCommonHv {
   protected $parent;
 
   /**
-   * PHP Doc Block for this property
+   * Array of information about this object
+   * used for various purposes such as the
+   * docBlock and deciding where to save the
+   * class - but I'm using a docBlock 'cos
+   * it's easy.
+   *
+   * @var object PHPDocBlock
+   */
+  protected $info = array();
+
+  /**
+   * PHP Doc Block for this object
    *
    * @var object PHPDocBlock
    */
@@ -81,11 +92,29 @@ class PHPCommonHv {
 
   protected function __construct(PHPSaveFilesDefault $parent) {
     $this->parent = $parent;
+    $this->info = new PHPDocBlock();
     $this->docBlock = new PHPDocBlock();
   }
 
   public function __get($var) {
-    return property_exists($this, $var) ? $this->$var : $this->docBlock->$var;
+    return property_exists($this, $var) ? $this->$var : $this->info->$var;
+  }
+
+  public function __set($var, $val) {
+    if (!property_exists($this, $var)) {
+      $this->info->$var = $val;
+    }
+  }
+
+  /**
+   * Send Class Doc block to output buffer
+   *
+   * @param $docBlock instance of PHPDocBlock class
+   *
+   * return string
+   */
+  protected function sendDocBlock(OutputBuffer $buffer, $indent = '') {
+    $buffer->lines($this->docBlock->getDocBlock($indent));
   }
 
 }

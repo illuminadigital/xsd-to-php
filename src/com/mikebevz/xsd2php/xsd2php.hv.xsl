@@ -58,9 +58,6 @@
 									</class>
 								</xsl:otherwise>
 							</xsl:choose>
-
-
-
 						</xsl:otherwise>
 					</xsl:choose>
 				</xsl:for-each>
@@ -95,7 +92,7 @@
 					<xsl:choose>
 						<xsl:when test="@namespace">
 							<class debug="1.3-1" name="{@name}" type="{$type}"
-								namespace="{@namespace}">
+								namespace="{@namespace}" dummyProperty="true">
 								<property debug="Dummy-Property-1" xmlType="element"
 									name="value" type="{$type}" namespace="#default#"
 									typeNamespace="#default#">
@@ -110,7 +107,7 @@
 						</xsl:when>
 						<xsl:otherwise>
 							<class debug="1.3-2 - ERROR No Namespace" name="{@name}"
-								type="{$type}" namespace="{@namespace}">
+								type="{$type}" namespace="{@namespace}" dummyProperty="true">
 								<property debug="Dummy-Property-2" xmlType="element"
 									name="value" type="{$type}" namespace="#default#"
 									typeNamespace="#default#">
