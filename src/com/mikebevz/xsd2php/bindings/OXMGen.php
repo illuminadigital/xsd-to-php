@@ -13,6 +13,26 @@ class OXMGen {
     $modifiers = array(
       'xml' => $phpClass->xmlName,
     );
+
+    $namespaces = array(
+      array(
+        'namespace' => $phpClass->xmlNamespace,
+        'prefix' => $phpClass->parent->shrinkNS($phpClass->xmlNamespace),
+      ),
+    );
+
+    $namespaceInfo = '';
+    foreach ($namespaces as $namespace) {
+      $names = array();
+      foreach ($namespace as $k => $v) {
+        $names[] = "$k='$v'";
+      }
+      $namespaceInfo[] = "\n * \t@XmlNamespace(" . implode(', ', $names) . ')';
+    }
+
+    $phpClass->docBlock->XmlNamespaces = '({' . implode('', $namespaceInfo) . "\n * })";
+
+    println($phpClass->info, __METHOD__);
     if ($phpClass->dummyProperty!='true') {
       $phpClass->docBlock->XmlEntity = static::docBlockPropertyModifiers($modifiers);
     }

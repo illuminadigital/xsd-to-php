@@ -226,8 +226,27 @@ class PHPSaveFilesDefault extends Common implements \com\mikebevz\xsd2php\iPHPSa
     foreach($this->xsd2php->shortNamespaces as $shortNs => $longNs) {
       if ($ns == $shortNs) {
         $ns = $longNs;
+        break;
       }
+    }
+    return $ns;
+  }
 
+  /**
+   * Resolve long namespace
+   * @param string $ns Long namespace
+   *
+   * @return string
+   */
+  public function shrinkNS($ns) {
+    if ($ns == $this->xsd2php->targetNamespace) {
+      return '';
+    }
+    foreach($this->xsd2php->shortNamespaces as $shortNs => $longNs) {
+      if ($ns == $longNs) {
+        $ns = $shortNs;
+        break;
+      }
     }
     return $ns;
   }
