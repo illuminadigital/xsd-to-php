@@ -16,7 +16,7 @@ class OXMGen {
 
     $namespaces = array(
       array(
-        'namespace' => $phpClass->xmlNamespace,
+        'url' => $phpClass->xmlNamespace,
         'prefix' => $phpClass->parent->shrinkNS($phpClass->xmlNamespace),
       ),
     );
@@ -25,14 +25,13 @@ class OXMGen {
     foreach ($namespaces as $namespace) {
       $names = array();
       foreach ($namespace as $k => $v) {
-        $names[] = "$k='$v'";
+        $names[] = "$k=\"$v\"";
       }
-      $namespaceInfo[] = "\n * \t@XmlNamespace(" . implode(', ', $names) . ')';
+      $namespaceInfo[] = "@XmlNamespace(" . implode(', ', $names) . ')';
     }
 
-    $phpClass->docBlock->XmlNamespaces = '({' . implode('', $namespaceInfo) . "\n * })";
+    $phpClass->docBlock->XmlNamespaces = $namespaceInfo;
 
-    #println($phpClass->info, __METHOD__ . ' (' . __LINE__ . ')');
     if ($phpClass->dummyProperty!='true') {
       $phpClass->docBlock->XmlEntity = static::docBlockPropertyModifiers($modifiers);
     }
@@ -50,11 +49,11 @@ class OXMGen {
     }
 
     if ($phpProperty->dummyProperty=='true') {
-      $modifiers['xml-name'] = $phpProperty->myClass->name;
+      $modifiers['name'] = $phpProperty->myClass->name;
       $phpProperty->docBlock->XmlField = static::docBlockPropertyModifiers($modifiers);
     }
     else {
-      $modifiers['xml-name'] = $phpProperty->name;
+      $modifiers['name'] = $phpProperty->name;
       $phpProperty->docBlock->XmlElement = static::docBlockPropertyModifiers($modifiers);
     }
   }
@@ -65,7 +64,7 @@ class OXMGen {
     }
     $modes = array();
     foreach ($modifiers as $k => $v) {
-      $mods[] = "$k='$v'";
+      $mods[] = "$k=\"$v\"";
     }
     return '(' . implode(', ', $mods) . ')';
   }

@@ -429,8 +429,12 @@ class PHPPropertyHv extends PHPCommonHv {
     }
     // Build the validation for simple php types
     if (empty($this->parent->classMap[$type])) {
+      $phpType = $this->phpType;
+      if ($phpType=='boolean') {
+        $phpType = 'bool';
+      }
       return array(
-        "{$indent}if (!is_{$this->phpType}({$varName})) {",
+        "{$indent}if (!is_{$phpType}({$varName})) {",
         "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
         "{$indent}}",
       );

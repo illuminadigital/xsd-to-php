@@ -290,6 +290,7 @@ class Common {
                 return 'string';
                 break;
 
+            case 'bool':
             case 'boolean':
                 return 'boolean';
                 break;

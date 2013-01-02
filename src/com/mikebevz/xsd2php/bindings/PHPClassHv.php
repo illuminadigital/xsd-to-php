@@ -52,10 +52,15 @@ class PHPClassHv extends PHPCommonHv {
     $text  = array();
     foreach ($docs as $doc) {
       $field = ucfirst(strtolower($doc->getAttribute('name')));
+      $info = '';
       if ($doc->nodeValue != '') {
-        $text[$field] = trim($doc->nodeValue);
+        $info = $doc->nodeValue;
       } elseif ($doc->getAttribute('value') != '') {
-        $text[$field] = trim($doc->getAttribute('value'));
+        $info = $doc->getAttribute('value');
+      }
+      $info = trim(preg_replace('/\s+/', ' ', $info), '\' ');
+      if ($info) {
+        $text[$field] = $info;
       }
     }
     $phpClass->textInfo = $text;
@@ -197,7 +202,7 @@ class PHPClassHv extends PHPCommonHv {
     // Output the annotation content for this class...
     $this->buffer->line("\t/**");
     $this->buffer->lines($this->textInfo, "\t * ");
-    $this->buffer->line("'\t */");
+    $this->buffer->line("\t */");
 
     // Output all the property enumerations
     foreach ($this->classProperties as $property) {

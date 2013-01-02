@@ -21,8 +21,13 @@ class PHPDocBlock {
   }
 
   public function __set($var, $val) {
-    // Remove redundant white space
-    $this->docs[$var] = trim(preg_replace('/\s+/', ' ', $val));
+    if (is_array($val)) {
+      $this->docs[$var] = $val;
+    }
+    else {
+      // Remove redundant white space
+      $this->docs[$var] = trim(preg_replace('/\s+/', ' ', $val));
+    }
   }
 
   /**
@@ -32,9 +37,19 @@ class PHPDocBlock {
    * @return array string
    */
   public function getDocBlock($indent = '') {
+    $indent2 = "{$indent}\t";
     $output = array("{$indent}/**");
     foreach ($this->docs as $key => $value) {
-      $output[] = "{$indent} * @{$key}\t{$value}";
+      if (is_array($value)) {
+        $output[] = "{$indent} * @{$key} ({";
+        foreach ($value as $item) {
+          $output[] = "{$indent} *{$indent2}{$item}";
+        }
+        $output[] = "{$indent} * })";
+      }
+      else {
+        $output[] = "{$indent} * @{$key}\t{$value}";
+      }
     }
     $output[] = "{$indent} */";
     return $output;
