@@ -40,7 +40,9 @@ class PHPEnumeration {
     }
     $enum = array();
     foreach ($this->items as $item) {
-      $enum[] = "'{$item->value}' => '{$item->content}'";
+      $value = addslashes($item->value);
+      $content = addslashes($item->content);
+      $enum[] = "'{$value}' => '{$content}'";
     }
     $enums = implode(', ', $enum);
 

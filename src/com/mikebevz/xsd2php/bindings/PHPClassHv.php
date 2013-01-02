@@ -138,7 +138,7 @@ class PHPClassHv extends PHPCommonHv {
       $uses[] = $this->parent->phpClasses[$type]->useClause();
     }
 
-    return "$namespaceClause\n" . implode("\n", $uses) . "\n$sourceCode";
+    return "$namespaceClause\n" . implode("\n", array_filter(array_map('trim', $uses))) . "\n$sourceCode";
   }
 
   public function addUsed($type) {
@@ -148,7 +148,7 @@ class PHPClassHv extends PHPCommonHv {
   protected function namespaceClause() {
     $namespaceClause = '';
     if ($this->info->xmlNamespace != '') {
-      $namespace = $this->parent->namespaceToPhp($this->phpName);
+      $namespace = $this->parent->namespaceToPhp($this->namespace);
       $namespace = str_replace('.', '\\', $namespace);
       $namespaceClause = "namespace {$namespace};";
     }
@@ -178,14 +178,15 @@ class PHPClassHv extends PHPCommonHv {
     // Build the class identification line and send
     $define = "class {$this->phpName}";
     if ($this->extends != '') {
+      $extension = static::phpIdentifier($this->extends, FALSE);
       if ($this->extendsNamespace != '') {
         $nsLastName = array_reverse(explode('\\', $this->extendsNamespace));
         $path = $this->parent->namespaceToPhp($nsLastName[0]);
         $path = str_replace('.', '\\', $path);
-        $define .= " extends {$path}\\{$this->extends}";
-        $this->buffer->line($this->buildUseClause($this->extendsNamespace, $this->extends));
+        $define .= " extends {$path}\\{$extension}";
+        $this->buffer->line($this->buildUseClause($this->extendsNamespace, $extension));
       } else {
-        $define .= " extends {$this->extends}";
+        $define .= " extends {$extension}";
       }
     }
 

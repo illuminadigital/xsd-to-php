@@ -16,7 +16,7 @@ class PHPCommonHv {
    * @return string valid PHP identifier derived from $raw
    */
   static protected function phpIdentifier($raw, $instance = TRUE) {
-    $raw = str_replace(array('-', '/', '\\'), '_', $raw);
+    $raw = str_replace(array('-', '/', '\\', ':'), '_', $raw);
     $raw = array_map('ucfirst', array_filter(explode('_', $raw)));
     if ($instance) {
       $s = $raw[0];
