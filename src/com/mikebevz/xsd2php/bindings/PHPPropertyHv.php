@@ -235,7 +235,7 @@ class PHPPropertyHv extends PHPCommonHv {
   }
 
   /**
-   * Buffer property Getter function
+   * Buffer property Setter function
    *
    * @param object $buffer The output buffer to use
    * @param string $indent Indentation
@@ -244,12 +244,33 @@ class PHPPropertyHv extends PHPCommonHv {
   public function setter(OutputBuffer $buffer, $indent = "\t") {
     $buffer->line('');
 
-
     $buffer->lines(array(
       "public function set{$this->ucPhpName}(" . $this->buildParam() . ") {",
       "{$indent}\$this->{$this->phpName} = " . $this->buildValidateCall() . ';',
       '}',
     ), $indent);
+  }
+
+  /**
+   * Buffer property Adder function for arrays
+   *
+   * @param object $buffer The output buffer to use
+   * @param string $indent Indentation
+   *
+   */
+  public function adder(OutputBuffer $buffer, $indent = "\t") {
+    $buffer->line('');
+
+    $buffer->lines(array(
+      "public function add{$this->ucPhpName}(" . $this->buildParam(FALSE) . ") {",
+      "{$indent}\$this->{$this->phpName}[] = " . $this->buildArrayTypeValidateCall() . ';',
+      '}',
+    ), $indent);
+  }
+
+  protected function buildParam($incArray = TRUE, $incNull = FALSE) {
+    $typeHint = $this->buildTypeHint($incArray);
+    return "{$typeHint}{$this->varName}" . ($incNull?' = NULL':'');
   }
 
   protected function buildValidateCall($incNull = FALSE) {
@@ -260,13 +281,18 @@ class PHPPropertyHv extends PHPCommonHv {
     return "{$nullCheck}\$this->validate{$this->ucPhpName}({$this->varName})";
   }
 
-  protected function buildParam($incArray = TRUE, $incNull = FALSE) {
-    $typeHint = $this->buildTypeHint($incArray);
-    return "{$typeHint}{$this->varName}" . ($incNull?' = NULL':'');
+  protected function buildArrayTypeValidateCall() {
+    $typeHint = $this->buildTypeHint(FALSE);
+    if ($typeHint) {
+      // If this is not a simple type we don't need a separate
+      // check because the checking is done in the parameter
+      return $this->varName;
+    }
+    return "\$this->validate{$this->ucPhpName}Type({$this->varName})";
   }
 
   /**
-   * Buffer property Getter function
+   * Buffer property Validator function
    *
    * @param object $buffer The output buffer to use
    * @param string $indent Indentation
@@ -274,7 +300,6 @@ class PHPPropertyHv extends PHPCommonHv {
    */
   public function validator(OutputBuffer $buffer, $indent = "\t") {
     $indent2 = "$indent\t";
-    $indent3 = "$indent\t\t";
     $typeHint = $this->buildTypeHint();
 
     $buffer->line('');
@@ -294,6 +319,35 @@ class PHPPropertyHv extends PHPCommonHv {
     foreach ($this->restrictions as $restriction) {
       $restriction->buildValidator($buffer, $this, $indent2);
     }
+
+    $buffer->lines(array(
+      '',
+      "{$indent}return {$this->varName};",
+      '}',
+    ), $indent);
+  }
+
+  /**
+   * Buffer property Validator function
+   *
+   * @param object $buffer The output buffer to use
+   * @param string $indent Indentation
+   *
+   */
+  public function typeValidator(OutputBuffer $buffer, $indent = "\t") {
+    $indent2 = "$indent\t";
+    $typeHint = $this->buildTypeHint(FALSE);
+    if ($typeHint) {
+      // If this is not a simple type we can just skip this
+      // because we don't call it (see buildArrayTypeValidateCall() above)
+      return;
+    }
+
+    $buffer->line('');
+    $buffer->line("{$indent}protected function validate{$this->ucPhpName}Type({$typeHint}{$this->varName}) {");
+
+    // Build the validation for simple php types
+    $buffer->lines($this->buildPHPTypeCheck($this->type, $indent2));
 
     $buffer->lines(array(
       '',
@@ -324,7 +378,7 @@ class PHPPropertyHv extends PHPCommonHv {
     // Build the validation for simple php types
     if (empty($this->parent->classMap[$type])) {
       return array(
-        "{$indent}if (is_{$this->phpType}({$varName})) {",
+        "{$indent}if (!is_{$this->phpType}({$varName})) {",
         "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
         "{$indent}}",
       );
@@ -337,10 +391,11 @@ class PHPPropertyHv extends PHPCommonHv {
     if (!$varName) {
       $varName = $this->varName;
     }
+
     // Build the validation for simple php types
     if (!empty($this->parent->classMap[$type])) {
       return array(
-        "{$indent}if ({$varName} typeof {$this->parent->classMap[$type]}) {",
+        "{$indent}if (!({$varName} instanceof {$this->parent->classMap[$type]})) {",
         "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
         "{$indent}}",
       );

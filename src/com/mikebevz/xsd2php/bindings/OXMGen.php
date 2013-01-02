@@ -32,7 +32,7 @@ class OXMGen {
 
     $phpClass->docBlock->XmlNamespaces = '({' . implode('', $namespaceInfo) . "\n * })";
 
-    println($phpClass->info, __METHOD__);
+    #println($phpClass->info, __METHOD__ . ' (' . __LINE__ . ')');
     if ($phpClass->dummyProperty!='true') {
       $phpClass->docBlock->XmlEntity = static::docBlockPropertyModifiers($modifiers);
     }

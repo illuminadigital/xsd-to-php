@@ -196,7 +196,6 @@ class PHPClassHv extends PHPCommonHv {
     $this->buffer->lines($this->textInfo, "\t * ");
     $this->buffer->line("'\t */");
 
-
     // Output all the property enumerations
     foreach ($this->classProperties as $property) {
       $property->enumeration($this->buffer);
@@ -211,12 +210,12 @@ class PHPClassHv extends PHPCommonHv {
 
     // Output all the property getters & setters
     foreach ($this->classProperties as $property) {
+      $property->getter($this->buffer);
       $property->setter($this->buffer);
       $property->validator($this->buffer);
-      $property->getter($this->buffer);
       if ($property->maxOccurs!=1) {
-        #$property->adder($this->buffer);
-        #$property->remover($this->buffer);
+        $property->adder($this->buffer);
+        $property->typeValidator($this->buffer);
       }
     }
 
