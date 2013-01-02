@@ -42,7 +42,7 @@ class OXMGen {
 
   static public function docBlockProperty(\DOMDocument $dom, \DOMElement $property, PHPPropertyHv $phpProperty) {
     $modifiers = array(
-      'type' => $phpProperty->type,
+      'type' => $phpProperty->nameSpacedType(),
     );
     if ($phpProperty->isArray) {
       $modifiers['collection'] = 'true';

@@ -37,6 +37,9 @@ class PHPDocBlock {
    * @return array string
    */
   public function getDocBlock($indent = '') {
+    if (empty($this->docs)) {
+      return array();
+    }
     $indent2 = "{$indent}\t";
     $output = array("{$indent}/**");
     foreach ($this->docs as $key => $value) {

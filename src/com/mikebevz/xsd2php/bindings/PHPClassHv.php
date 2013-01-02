@@ -68,7 +68,8 @@ class PHPClassHv extends PHPCommonHv {
     // Fetch all the properties for this
     $properties = $xPath->query('property', $class);
     foreach($properties as $property) {
-      $phpClass->classProperties[] = \com\mikebevz\xsd2php\PHPPropertyHv::factory($phpClass, $dom, $property);
+      $phpProperty = \com\mikebevz\xsd2php\PHPPropertyHv::factory($phpClass, $dom, $property);
+      $phpClass->classProperties[$phpProperty->phpName] = $phpProperty;
     }
 
     OXMGen::docBlockClass($dom, $class, $phpClass);
@@ -132,6 +133,10 @@ class PHPClassHv extends PHPCommonHv {
     $this->buffer = new OutputBuffer();
   }
 
+  public function getProperty($phpName) {
+    return !empty($this->classProperties[$phpName]) ? $this->classProperties[$phpName] : NULL;
+  }
+
   public function __toString() {
     $sourceCode =  (string) $this->getPhpCode();
 
@@ -153,7 +158,7 @@ class PHPClassHv extends PHPCommonHv {
   protected function namespaceClause() {
     $namespaceClause = '';
     if ($this->info->xmlNamespace != '') {
-      $namespace = $this->parent->namespaceToPhp($this->namespace);
+      $namespace = $this->parent->namespaceToPhp($this->info->xmlNamespace);
       $namespace = str_replace('.', '\\', $namespace);
       $namespaceClause = "namespace {$namespace};";
     }

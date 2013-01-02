@@ -20,6 +20,7 @@ class PHPPropertyHv extends PHPCommonHv {
 
     $phpProperty->type = $property->getAttribute('type');
     $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
+    $phpProperty->simpleType = $phpProperty->parent->isPHPType($phpProperty->type);
 
     $phpProperty->namespace = $phpProperty->parent->expandNS($property->getAttribute('namespace'));
     $phpProperty->typeNamespace = $phpProperty->parent->expandNS($property->getAttribute('typeNamespace'));
@@ -135,16 +136,23 @@ class PHPPropertyHv extends PHPCommonHv {
   /**
    * The type of this property
    *
-   * @var boolean
+   * @var string
    */
   protected $type;
+
+  /**
+   * The PHP basic type of this property
+   *
+   * @var string
+   */
+  protected $phpType;
 
   /**
    * Whether this property is a simpleType
    *
    * @var boolean
    */
-  protected $phpType;
+  protected $simpleType;
 
   /**
    * Tag whether this property is an array
@@ -191,6 +199,19 @@ class PHPPropertyHv extends PHPCommonHv {
   protected function __construct(PHPSaveFilesDefault $parent, PHPClassHv $myClass) {
     parent::__construct($parent);
     $this->myClass = $myClass;
+  }
+
+  public function nameSpacedType($addArray = FALSE) {
+    if ($this->simpleType) {
+      $type = $this->phpType;
+    }
+    else {
+      $type = ucfirst($this->type);
+      $typeNS = $this->parent->namespaceToPhp($this->namespace);
+      $typeNS = str_replace('.', '\\', $typeNS);
+      $type = "{$typeNS}\\{$type}";
+    }
+    return $type . (($addArray && $this->isArray)?'[]':'');
   }
 
   /**

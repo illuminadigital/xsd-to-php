@@ -42,6 +42,10 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
     return $sourceCode;
   }
 
+  public function getClass($xmlName) {
+    return !empty($this->phpClasses[$xmlName]) ? $this->phpClasses[$xmlName] : NULL;
+  }
+
   /**
    * Resolve short namespace
    * @param string $ns Short namespace
