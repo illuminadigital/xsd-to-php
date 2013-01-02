@@ -255,6 +255,10 @@ class Common {
       return in_array($type, $this->basicTypes);
     }
 
+    public function isPHPType($type) {
+      return in_array($type, $this->phpTypes);
+    }
+
     /**
      * Convert XMLSchema data type to PHP data type
      *
