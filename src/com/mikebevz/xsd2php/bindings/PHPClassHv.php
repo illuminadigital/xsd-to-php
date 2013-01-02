@@ -133,7 +133,6 @@ class PHPClassHv extends PHPCommonHv {
     $namespaceClause = $this->namespaceClause();
 
     // Now collect the namespaces to be used...
-
     $uses = array();
     foreach ($this->usedMap as $type) {
       $uses[] = $this->parent->phpClasses[$type]->useClause();
@@ -159,11 +158,15 @@ class PHPClassHv extends PHPCommonHv {
   protected function useClause() {
     $useClause = '';
     if ($this->xmlNamespace != '') {
-      $use = $this->parent->namespaceToPhp($this->xmlNamespace);
-      $use = str_replace('.', '\\', $use);
-      $useClause = "use {$use}\\{$this->phpName};";
+      $useClause = $this->buildUseClause($this->xmlNamespace, $this->phpName);
     }
     return $useClause;
+  }
+
+  protected function buildUseClause($ns, $name) {
+    $use = $this->parent->namespaceToPhp($ns);
+    $use = str_replace('.', '\\', $use);
+    return "use {$use}\\{$name};";
   }
 
   /**
@@ -172,23 +175,22 @@ class PHPClassHv extends PHPCommonHv {
    * @return string
    */
   protected function getPhpCode() {
-    if ($this->extendsNamespace != '') {
-      $this->buffer->line("use {$this->extendsNamespace}");
-    }
-
-    // Send the class docBlock
-    $this->sendDocBlock($this->buffer);
-
     // Build the class identification line and send
     $define = "class {$this->phpName}";
     if ($this->extends != '') {
       if ($this->extendsNamespace != '') {
         $nsLastName = array_reverse(explode('\\', $this->extendsNamespace));
-        $define .= " extends {$nsLastName[0]} \\ {$this->extends}";
+        $path = $this->parent->namespaceToPhp($nsLastName[0]);
+        $path = str_replace('.', '\\', $path);
+        $define .= " extends {$path}\\{$this->extends}";
+        $this->buffer->line($this->buildUseClause($this->extendsNamespace, $this->extends));
       } else {
         $define .= " extends {$this->extends}";
       }
     }
+
+    // Send the class docBlock
+    $this->sendDocBlock($this->buffer);
     $this->buffer->line("{$define} {");
 
     // Output the annotation content for this class...
@@ -211,6 +213,7 @@ class PHPClassHv extends PHPCommonHv {
     // Output all the property getters & setters
     foreach ($this->classProperties as $property) {
       $property->getter($this->buffer);
+      $property->creator($this->buffer);
       $property->setter($this->buffer);
       $property->validator($this->buffer);
       if ($property->maxOccurs!=1) {

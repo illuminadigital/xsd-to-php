@@ -225,11 +225,63 @@ class PHPPropertyHv extends PHPCommonHv {
    *
    */
   public function getter(OutputBuffer $buffer, $indent = "\t") {
+    $indent2 = "{$indent}\t";
     $buffer->line('');
 
     $buffer->lines(array(
       "public function get{$this->ucPhpName}() {",
+      "{$indent}if (\$this->{$this->phpName}===NULL) {",
+      "{$indent2}\$this->{$this->phpName} = \$this->create{$this->ucPhpName}();",
+      "{$indent}}",
       "{$indent}return \$this->{$this->phpName};",
+      '}',
+    ), $indent);
+  }
+
+  /**
+   * Buffer property Creator function
+   *
+   * @param object $buffer The output buffer to use
+   * @param string $indent Indentation
+   *
+   */
+  public function creator(OutputBuffer $buffer, $indent = "\t") {
+    $indent2 = "{$indent}\t";
+
+    $typeHint = trim($this->buildTypeHint());
+    if ($typeHint=='array') {
+      $creator = 'array()';
+    }
+    elseif ($typeHint) {
+      $creator = "new $typeHint()";
+    }
+    else {
+      switch ($this->type) {
+        case 'string':
+          $creator = "''";
+          break;
+        case 'int':
+        case 'integer':
+          $creator = '0';
+          break;
+        case 'bool':
+        case 'boolean':
+          $creator = 'FALSE';
+          break;
+        case 'float':
+        case 'double':
+          $creator = '0.0';
+          break;
+        default:
+          $creator = 'NULL';
+          break;
+      }
+    }
+
+    $buffer->lines(array(
+      '',
+      "protected function create{$this->ucPhpName}() {",
+      "{$indent}return {$creator};",
       '}',
     ), $indent);
   }

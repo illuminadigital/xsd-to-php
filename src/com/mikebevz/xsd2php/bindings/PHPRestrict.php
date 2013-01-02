@@ -122,7 +122,7 @@ class PHPRestrict {
 
     $buffer->lines(array(
       "{$indent}if (!preg_match('/^{$this->value}$/', {$property->varName})) {",
-      "{$indent2}throw new \\Exception(sprintf('Supplied %s value did not match the right pattern.', '{$property->myClass->name}', {$this->value}));",
+      "{$indent2}throw new \\Exception(sprintf('Supplied %s value did not match the right pattern.', '{$property->myClass->name}', '{$this->value}'));",
       "{$indent}}",
     ));
   }
