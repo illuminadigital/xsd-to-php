@@ -47,8 +47,8 @@ function directoryToArray($directory, $recursive = TRUE) {
   return $array_items;
 }
 
-add_include_path(_DIR_ . '/../../lib/ZF/1.10.7');
-add_include_path(_DIR_ . '/../../src');
+add_include_path(__DIR__ . '/../../lib/ZF/1.10.7');
+add_include_path(__DIR__ . '/../../src');
 add_include_path(__DIR__);
 
 function println($msg = '', $prefix = '') {
