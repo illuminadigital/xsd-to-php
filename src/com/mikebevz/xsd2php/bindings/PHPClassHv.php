@@ -29,16 +29,31 @@ class PHPClassHv extends PHPCommonHv {
     if ($class->getAttribute('namespace') != '') {
       $phpClass->namespace = $class->getAttribute('namespace');
     }
+    else {
+      $phpClass->namespace = '#default#';
+    }
 
-    if ($class->getElementsByTagName('extends')->length > 0) {
-      if (!in_array($class->getElementsByTagName('extends')->item(0)->getAttribute('name'), $phpClass->parent->basicTypes)) {
-        $phpClass->extends = $class->getElementsByTagName('extends')->item(0)->getAttribute('name');
-        $phpClass->type    = $class->getElementsByTagName('extends')->item(0)->getAttribute('name');
+    if ($extension = $class->getAttribute('extends')) {
+      if (!$phpClass->parent->isBasicType($extension)) {
+        list($ns, $extension) = explode(':', $extension);
+        if (!$extension) {
+          $extension = $ns;
+          $ns = '';
+        }
+        $phpClass->extends = $phpClass->type = $extension;
+        $phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($ns);
+      }
+    }
+    elseif ($class->getElementsByTagName('extends')->length > 0) {
+      $name = $class->getElementsByTagName('extends')->item(0)->getAttribute('name');
+      if (!$phpClass->parent->isBasicType($name)) {
+        $phpClass->extends = $phpClass->type = $name;
         $phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($class->getElementsByTagName('extends')->item(0)->getAttribute('namespace'));
       }
     }
 
     $phpClass->info->dummyProperty = $class->getAttribute('dummyProperty');
+
     $phpClass->info->xmlNamespace = strtolower($phpClass->parent->expandNS($phpClass->namespace));
     $phpClass->info->xmlType      = $phpClass->type;
     $phpClass->info->xmlName      = $phpClass->name;
@@ -146,6 +161,10 @@ class PHPClassHv extends PHPCommonHv {
     $uses = array();
     foreach ($this->usedMap as $type) {
       $uses[] = $this->parent->phpClasses[$type]->useClause();
+    }
+
+    if ($this->namespace=='#default#') {
+      println("$namespaceClause\n" . implode("\n", array_filter(array_map('trim', $uses))), $this->phpName);
     }
 
     return "$namespaceClause\n" . implode("\n", array_filter(array_map('trim', $uses))) . "\n$sourceCode";

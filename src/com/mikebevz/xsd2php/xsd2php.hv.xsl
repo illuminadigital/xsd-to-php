@@ -36,7 +36,8 @@
 							</class>
 						</xsl:when>
 						<xsl:when test="*[local-name='simpleType']/@name=''">
-							<class debug="1.3" name="{@name}" namespace="{@namespace}">
+							<xsl:variable name="baseType" select="current()/*[local-name()='restriction']/@base" />
+							<class debug="1.3" name="{@name}" extends="{$baseType}" namespace="{@namespace}">
 								<xsl:apply-templates />
 							</class>
 						</xsl:when>
@@ -91,7 +92,7 @@
 						select="current()/*[local-name()='restriction']/@base" />
 					<xsl:choose>
 						<xsl:when test="@namespace">
-							<class debug="1.3-1" name="{@name}" type="{$type}"
+							<class debug="1.3-1" name="{@name}" extends="{$type}" type="{$type}"
 								namespace="{@namespace}" dummyProperty="true">
 								<property debug="Dummy-Property-1" xmlType="element"
 									name="value" type="{$type}" namespace="#default#"
@@ -106,7 +107,7 @@
 							</class>
 						</xsl:when>
 						<xsl:otherwise>
-							<class debug="1.3-2 - ERROR No Namespace" name="{@name}"
+							<class debug="1.3-2 - ERROR No Namespace" name="{@name}" extends="{$type}"
 								type="{$type}" namespace="{@namespace}" dummyProperty="true">
 								<property debug="Dummy-Property-2" xmlType="element"
 									name="value" type="{$type}" namespace="#default#"
