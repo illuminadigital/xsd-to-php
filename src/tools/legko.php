@@ -1,5 +1,5 @@
 <?php
-require_once './support.php';
+require_once _DIR_ . DIRECTORY_SEPARATOR . 'support.php';
 
 use com\mikebevz\xsd2php;
 
