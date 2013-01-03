@@ -179,6 +179,12 @@ class PHPClassHv extends PHPCommonHv {
     return "use {$use}\\{$name};";
   }
 
+  public function nameSpacedType() {
+    $ns = $this->parent->namespaceToPhp($this->xmlNamespace);
+    $ns = str_replace('.', '\\', $ns);
+    return "{$ns}\\{$this->phpName}";
+  }
+
   /**
    * Returns a PHP class
    *
@@ -193,11 +199,11 @@ class PHPClassHv extends PHPCommonHv {
         $nsLastName = array_reverse(explode('\\', $this->extendsNamespace));
         $path = $this->parent->namespaceToPhp($nsLastName[0]);
         $path = str_replace('.', '\\', $path);
-        $define .= " extends {$path}\\{$extension}";
-        $this->buffer->line($this->buildUseClause($this->extendsNamespace, $extension));
+        $define .= " extends \\{$path}\\{$extension}";
       } else {
         $define .= " extends {$extension}";
       }
+      $this->buffer->line($this->buildUseClause($this->extendsNamespace, $extension));
     }
 
     // Send the class docBlock

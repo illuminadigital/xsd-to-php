@@ -71,31 +71,25 @@ class PHPPropertyHv extends PHPCommonHv {
     if ($phpProperty->type) {
       $ns = '';
       if (empty($phpProperty->typeNamespace)) {
-        if (empty($phpProperty->namespace)) {
-          $phpProperty->info->var = $phpProperty->type;
-        }
-        else {
+        if (!empty($phpProperty->namespace)) {
           if ($phpProperty->namespace != $phpProperty->parent->xsd2php->xsdNs) {
             if ($phpProperty->namespace == '#default#') {
-              $ns = $phpProperty->parent->namespaceToPhp($phpProperty->parent->xsd2php->targetNamespace);
-            } else {
-              $ns = $phpProperty->parent->namespaceToPhp($phpProperty->namespace);
+              $ns = $phpProperty->parent->xsd2php->targetNamespace;
             }
-            $phpProperty->info->var = $ns . '\\' . $phpProperty->type;
-          }
-          else {
-            $phpProperty->info->var = $phpProperty->type;
+            else {
+              $ns = $phpProperty->namespace;
+            }
           }
         }
       }
-      else {
-        if ($phpProperty->typeNamespace == $phpProperty->parent->xsd2php->xsdNs) {
-          $phpProperty->info->var = $phpProperty->type;
-        } else {
-          $ns = $phpProperty->parent->namespaceToPhp($phpProperty->typeNamespace);
-          $phpProperty->info->var = $ns . '\\' . $phpProperty->type;
-        }
+      elseif ($phpProperty->typeNamespace != $phpProperty->parent->xsd2php->xsdNs) {
+        $ns = $phpProperty->typeNamespace;
       }
+
+      if ($ns) {
+        $ns = $phpProperty->parent->namespaceToPhp($ns);
+      }
+      $phpProperty->info->var = ($ns?"$ns\\":'') . $phpProperty->type;
 
       // Is it an array?
       if ($phpProperty->isArray) {
@@ -202,14 +196,20 @@ class PHPPropertyHv extends PHPCommonHv {
   }
 
   public function nameSpacedType($addArray = FALSE) {
-    if ($this->simpleType) {
-      $type = $this->phpType;
+
+    $type = static::phpIdentifier($this->type, FALSE);
+    if (!$this->simpleType) {
+      if (empty($this->parent->phpClasses[$type])) {
+        $typeNS = $this->parent->namespaceToPhp($this->namespace);
+        $typeNS = str_replace('.', '\\', $typeNS);
+        $type = "\\{$typeNS}\\{$type}";
+      }
+      else {
+        $type = $this->parent->phpClasses[$type]->nameSpacedType();
+      }
     }
     else {
-      $type = ucfirst($this->type);
-      $typeNS = $this->parent->namespaceToPhp($this->namespace);
-      $typeNS = str_replace('.', '\\', $typeNS);
-      $type = "{$typeNS}\\{$type}";
+      $type = $this->parent->normalizeType($this->type);
     }
     return $type . (($addArray && $this->isArray)?'[]':'');
   }

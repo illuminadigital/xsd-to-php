@@ -20,7 +20,7 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
 
     // First build all the class objects
     $classes = $xPath->query('//classes/class');
-    foreach ($classes as $class) {
+    foreach (array_reverse($classes) as $class) {
 
       // Create the class
       $phpClass = \com\mikebevz\xsd2php\PHPClassHv::factory($this, $dom, $class);
