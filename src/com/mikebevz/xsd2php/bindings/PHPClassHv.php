@@ -163,10 +163,6 @@ class PHPClassHv extends PHPCommonHv {
       $uses[] = $this->parent->phpClasses[$type]->useClause();
     }
 
-    if ($this->namespace=='#default#') {
-      println("$namespaceClause\n" . implode("\n", array_filter(array_map('trim', $uses))), $this->phpName);
-    }
-
     return "$namespaceClause\n" . implode("\n", array_filter(array_map('trim', $uses))) . "\n$sourceCode";
   }
 
