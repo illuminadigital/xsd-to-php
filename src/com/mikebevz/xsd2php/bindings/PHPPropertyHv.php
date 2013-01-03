@@ -22,8 +22,12 @@ class PHPPropertyHv extends PHPCommonHv {
     $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
     $phpProperty->simpleType = $phpProperty->parent->isPHPType($phpProperty->type);
 
-    $phpProperty->namespace = $phpProperty->parent->expandNS($property->getAttribute('namespace'));
-    $phpProperty->typeNamespace = $phpProperty->parent->expandNS($property->getAttribute('typeNamespace'));
+    $ns = trim($property->getAttribute('namespace'));
+    $tns = trim($property->getAttribute('typeNamespace'));
+    $ns = empty($ns) ? $tns : $ns;
+    $tns = empty($tns) ? $ns : $tns;
+    $phpProperty->namespace = $phpProperty->parent->expandNS($ns);
+    $phpProperty->typeNamespace = $phpProperty->parent->expandNS($tns);
 
     $docs = $xPath->query('docs/doc', $property);
     foreach ($docs as $doc) {
@@ -196,7 +200,6 @@ class PHPPropertyHv extends PHPCommonHv {
   }
 
   public function nameSpacedType($addArray = FALSE) {
-
     if ($this->simpleType) {
       $type = $this->parent->normalizeType($this->type);
     }
@@ -204,7 +207,8 @@ class PHPPropertyHv extends PHPCommonHv {
       $type = static::phpIdentifier($this->type, FALSE);
 
       if (empty($this->parent->phpClasses[$this->type])) {
-        $typeNS = $this->parent->namespaceToPhp($this->namespace);
+        $ns = $this->namespace ? $this->namespace : $this->typeNamespace;
+        $typeNS = $this->parent->namespaceToPhp($ns);
         $typeNS = str_replace('.', '\\', $typeNS);
         $type = "\\{$typeNS}\\{$type}";
       }
