@@ -58,7 +58,7 @@ class PHPEnumeration {
     $buffer->line();
 
     $buffer->lines(array(
-      "{$indent}if (empty(\$enum{$this->parent->ucPhpName}[{$this->parent->varName}])) {",
+      "{$indent}if (empty(static::\$enum{$this->parent->ucPhpName}[{$this->parent->varName}])) {",
       "{$indent2}throw new \\Exception(sprintf('Supplied %s value (%s) was not a valid enumerated value.', '{$this->parent->myClass->name}', {$this->parent->varName}));",
       "{$indent}}",
     ));
