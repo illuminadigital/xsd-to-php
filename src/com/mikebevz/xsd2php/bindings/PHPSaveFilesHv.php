@@ -18,10 +18,14 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
   protected function getPHP(\DOMDocument $dom) {
     $xPath = new \DOMXPath($dom);
 
-    // First build all the class objects
-    $classes = $xPath->query('//classes/class');
-    foreach (array_reverse($classes) as $class) {
+    // First build all the class objects as a proper array
+    $classes = array();
+    foreach ($xPath->query('//classes/class') as $class) {
+      $classes[] = $class;
+    }
 
+    // Process in reverse order so the primary class is done last
+    foreach (array_reverse($classes) as $class) {
       // Create the class
       $phpClass = \com\mikebevz\xsd2php\PHPClassHv::factory($this, $dom, $class);
 
