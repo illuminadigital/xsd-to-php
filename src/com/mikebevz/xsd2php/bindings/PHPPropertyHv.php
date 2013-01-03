@@ -197,19 +197,20 @@ class PHPPropertyHv extends PHPCommonHv {
 
   public function nameSpacedType($addArray = FALSE) {
 
-    $type = static::phpIdentifier($this->type, FALSE);
-    if (!$this->simpleType) {
-      if (empty($this->parent->phpClasses[$type])) {
+    if ($this->simpleType) {
+      $type = $this->parent->normalizeType($this->type);
+    }
+    else {
+      $type = static::phpIdentifier($this->type, FALSE);
+
+      if (empty($this->parent->phpClasses[$this->type])) {
         $typeNS = $this->parent->namespaceToPhp($this->namespace);
         $typeNS = str_replace('.', '\\', $typeNS);
         $type = "\\{$typeNS}\\{$type}";
       }
       else {
-        $type = $this->parent->phpClasses[$type]->nameSpacedType();
+        $type = '\\' . $this->parent->phpClasses[$this->type]->nameSpacedType();
       }
-    }
-    else {
-      $type = $this->parent->normalizeType($this->type);
     }
     return $type . (($addArray && $this->isArray)?'[]':'');
   }

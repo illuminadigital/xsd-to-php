@@ -138,7 +138,7 @@ class PHPClassHv extends PHPCommonHv {
   }
 
   public function __toString() {
-    $sourceCode =  (string) $this->getPhpCode();
+    $sourceCode = (string) $this->getPhpCode();
 
     $namespaceClause = $this->namespaceClause();
 
@@ -191,7 +191,7 @@ class PHPClassHv extends PHPCommonHv {
    * @return string
    */
   protected function getPhpCode() {
-    // Build the class identification line and send
+    // Build the class identification line
     $define = "class {$this->phpName}";
     if ($this->extends != '') {
       $extension = static::phpIdentifier($this->extends, FALSE);
