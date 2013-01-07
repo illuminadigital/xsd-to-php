@@ -136,6 +136,7 @@ class Common {
     public function urnToPhpName($urn) {
         $urn = preg_replace('/urn:|http:\/\//', '', $urn);
         $urn = preg_replace('/-/', '_', $urn);
+        $urn = preg_replace('/__/', '_', $urn);
         return preg_replace('/:|\//', '\\', $urn);
     }
 
