@@ -54,7 +54,7 @@ class PHPClassHv extends PHPCommonHv {
 
     $phpClass->info->dummyProperty = $class->getAttribute('dummyProperty');
 
-    $phpClass->info->xmlNamespace = strtolower($phpClass->parent->expandNS($phpClass->namespace));
+    $phpClass->info->xmlNamespace = $phpClass->parent->expandNS($phpClass->namespace);
     $phpClass->info->xmlType      = $phpClass->type;
     $phpClass->info->xmlName      = $phpClass->name;
     if ($phpClass->namespace != '') {
