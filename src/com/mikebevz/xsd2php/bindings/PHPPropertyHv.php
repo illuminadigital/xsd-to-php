@@ -10,13 +10,27 @@ namespace com\mikebevz\xsd2php;
 class PHPPropertyHv extends PHPCommonHv {
 
   static public function factory(PHPClassHv $myClass, \DOMDocument $dom, \DOMElement $property) {
+    $name = $xns = NULL;
     $xPath = new \DOMXPath($dom);
     $phpProperty = new static($myClass->parent, $myClass);
 
     $phpProperty->name = $property->getAttribute('name');
+    if (strpos($phpProperty->name, ':')) {
+      list($xns, $name) = explode(':', $phpProperty->name);
+      $phpProperty->name = $name;
+    }
     $phpProperty->phpName = static::phpIdentifier($phpProperty->name);
     $phpProperty->ucPhpName = ucfirst($phpProperty->phpName);
     $phpProperty->varName = "\${$phpProperty->phpName}";
+
+    if ($xns && $name!='lang') {
+    println(array(
+      'name' => $phpProperty->name,
+      'phpName' => $phpProperty->phpName,
+      'ucPhpName' => $phpProperty->ucPhpName,
+      'varName' => $phpProperty->varName,
+    ), __METHOD__);
+    }
 
     $phpProperty->type = $property->getAttribute('type');
     $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
@@ -200,21 +214,24 @@ class PHPPropertyHv extends PHPCommonHv {
   }
 
   public function nameSpacedType($addArray = FALSE) {
-    $type = $this->parent->normalizeType($this->type);
-    if ($this->simpleType || $type!=$this->type) {
+    list($ns, $type, ) = explode(':', "{$this->type}:");
+    $type = empty($type) ? $ns : $type;
+    $ntype = $this->parent->normalizeType($type);
+
+    if ($this->simpleType || $type!=$ntype) {
       return $type;
     }
     else {
-      $type = static::phpIdentifier($this->type, FALSE);
+      $type = static::phpIdentifier($type, FALSE);
 
-      if (empty($this->parent->phpClasses[$this->type])) {
+      if (empty($this->parent->phpClasses[$type])) {
         $ns = $this->namespace ? $this->namespace : $this->typeNamespace;
         $typeNS = $this->parent->namespaceToPhp($ns);
         $typeNS = str_replace('.', '\\', $typeNS);
         $type = "\\{$typeNS}\\{$type}";
       }
       else {
-        $type = '\\' . $this->parent->phpClasses[$this->type]->nameSpacedType();
+        $type = '\\' . $this->parent->phpClasses[$type]->nameSpacedType();
       }
     }
     return $type . (($addArray && $this->isArray)?'[]':'');

@@ -242,22 +242,24 @@ class Xsd2Php extends Common
 
     foreach ($entries as $entry) {
       if ($entry->nodeValue == "http://www.w3.org/2001/XMLSchema") {
-        $this->xsdNs = preg_replace('/xmlns:(.*)/', "$1", $entry->nodeName);
-      }
-      if (//$entry->nodeName != $this->xsdNs
-        //&&
-        $entry->nodeName != 'xmlns:xml')  {
-        if (preg_match('/:/', $entry->nodeName)) {
-          $nodeName = explode(':', $entry->nodeName);
-          $nspaces[$nodeName[1]] = $entry->nodeValue;
-
-        } else {
-          $nspaces[$entry->nodeName] = $entry->nodeValue;
-        }
+        $this->xsdNs = $this->namespacePrefix($entry->nodeName);
       }
 
+      if (!in_array($entry->nodeName, array('xmlns:xml', 'xmlns:this')))  {
+        $this->addNamespace($entry->nodeName, $entry->nodeValue, $nspaces);
+      }
     }
+
     return $nspaces;
+  }
+
+  protected function addNamespace($prefix, $namespace, &$nspaces) {
+    $nspaces[$this->namespacePrefix($prefix)] = $namespace;
+  }
+
+  protected function namespacePrefix($prefix) {
+    list($def, $pref, ) = explode(':', "$prefix:");
+    return empty($pref) ? ($def=='xmlns'?'xs':$def) : $pref;
   }
 
   /**

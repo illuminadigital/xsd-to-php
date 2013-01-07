@@ -36,16 +36,17 @@ class PHPClassHv extends PHPCommonHv {
     if ($extension = $class->getAttribute('extends')) {
       if (!$phpClass->parent->isBasicType($extension)) {
         list($ns, $extension) = explode(':', $extension);
-        if (!$extension) {
-          $extension = $ns;
-          $ns = '';
-        }
+ #   println($extension, $ns);
+ #       if (!$extension) {
+ #         $extension = $ns;
+ #         $ns = '';
+ #       }
         $phpClass->extends = $phpClass->type = $extension;
         $phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($ns);
       }
     }
     elseif ($class->getElementsByTagName('extends')->length > 0) {
-      $name = $class->getElementsByTagName('extends')->item(0)->getAttribute('name');
+      $name = trim($class->getElementsByTagName('extends')->item(0)->getAttribute('name'));
       if (!$phpClass->parent->isBasicType($name)) {
         $phpClass->extends = $phpClass->type = $name;
         $phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($class->getElementsByTagName('extends')->item(0)->getAttribute('namespace'));
