@@ -48,11 +48,23 @@ class OXMGen {
       $modifiers['collection'] = 'true';
     }
 
-    if ($phpProperty->dummyProperty=='true') {
+    if ($phpProperty->dummyProperty=='true' && strpos($modifiers['type'], '\\')===FALSE) {
+      #println($phpProperty->type, 'XmlValue: ' . $modifiers['type']);
       $modifiers['name'] = $phpProperty->myClass->name;
-      $phpProperty->docBlock->XmlField = static::docBlockPropertyModifiers($modifiers);
+      $phpProperty->docBlock->XmlValue = static::docBlockPropertyModifiers($modifiers);
+    }
+    elseif ($phpProperty->simpleType) {
+      #println($phpProperty->type, 'XmlText: ' . $modifiers['type']);
+      $modifiers['name'] = $phpProperty->name;
+      $phpProperty->docBlock->XmlText = static::docBlockPropertyModifiers($modifiers);
+    }
+    elseif (@$phpProperty->xmlType == 'attribute') {
+      #println($phpProperty->type, 'XmlAttribute: ' . $modifiers['type']);
+      $modifiers['name'] = $phpProperty->name;
+      $phpProperty->docBlock->XmlAttribute = static::docBlockPropertyModifiers($modifiers);
     }
     else {
+      #println($phpProperty->type, 'XmlElement: ' . $modifiers['type']);
       $modifiers['name'] = $phpProperty->name;
       $phpProperty->docBlock->XmlElement = static::docBlockPropertyModifiers($modifiers);
     }

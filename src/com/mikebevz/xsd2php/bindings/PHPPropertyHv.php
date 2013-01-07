@@ -200,8 +200,9 @@ class PHPPropertyHv extends PHPCommonHv {
   }
 
   public function nameSpacedType($addArray = FALSE) {
-    if ($this->simpleType) {
-      $type = $this->parent->normalizeType($this->type);
+    $type = $this->parent->normalizeType($this->type);
+    if ($this->simpleType || $type!=$this->type) {
+      return $type;
     }
     else {
       $type = static::phpIdentifier($this->type, FALSE);

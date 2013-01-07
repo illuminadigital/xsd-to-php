@@ -293,12 +293,10 @@ class Common {
             case 'time':
             case 'token':
                 return 'string';
-                break;
 
             case 'bool':
             case 'boolean':
                 return 'boolean';
-                break;
 
             case 'positiveInteger':
             case 'byte':
@@ -315,11 +313,8 @@ class Common {
             case 'unsignedLong':
             case 'unsignedShort':
                 return 'integer';
-                break;
-            default:
-                return $type;
-                break;
         }
+        return $type;
     }
 
     public function phpTypeToSoap($phpType) {
