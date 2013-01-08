@@ -192,6 +192,12 @@ class PHPClassHv extends PHPCommonHv {
   protected function buildUseClause($ns, $name) {
     $use = $this->parent->namespaceToPhp($ns);
     $use = str_replace('.', '\\', $use);
+    
+    if ( empty($use) )
+    {
+    	return '';
+    }
+    // else
     return "use {$use}\\{$name};";
   }
 

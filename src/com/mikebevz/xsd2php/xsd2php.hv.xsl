@@ -340,8 +340,13 @@
 
 				<xsl:choose>
 					<xsl:when test="contains(@base, ':')">
-						<extends debug="Extends3" name="{substring-after(@base,':')}"
-							namespace="{substring-before(@base,':')}" />
+						<extends debug="Extends3" name="{substring-after(@base,':')}">
+							<xsl:attribute name="namespace">
+								<xsl:for-each select="//element[@name=current()/@base]">
+									<xsl:value-of select="ancestor-or-self::*/@xmlns:*[local-name()=$nspace]" />
+								</xsl:for-each>
+							</xsl:attribute>
+						</extends>
 						<xsl:apply-templates />
 					</xsl:when>
 					<xsl:otherwise>
