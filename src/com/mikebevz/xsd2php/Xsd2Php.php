@@ -278,20 +278,28 @@ class Xsd2Php extends Common
       return $dom;
     }
     foreach ($entries as $entry) {
-      // copy or download the imported schema to tmpfile
-      $tmpname = tempnam('/tmp', 'schema');
-
-      $tmp = fopen($tmpname, 'w');
-      $schemaFileParts = explode('/', str_replace('\\', '/', $entry->getAttribute("schemaLocation")));
-      $schemaFile = array_pop($schemaFileParts);
-      fwrite($tmp, file_get_contents($schemaFile, FILE_USE_INCLUDE_PATH));
-      fclose($tmp);
+	  $schemaFileParts = explode('/', str_replace('\\', '/', $entry->getAttribute("schemaLocation")));
+	  $schemaFile = array_pop($schemaFileParts);
+      if (strpos($entry->getAttribute("schemaLocation"), '://') !== FALSE)
+      {
+	    // copy or download the imported schema to tmpfile
+	    $tmpname = tempnam('/tmp', 'schema');
+	
+	    $tmp = fopen($tmpname, 'w');
+	    fwrite($tmp, file_get_contents($schemaFile, FILE_USE_INCLUDE_PATH));
+	    fclose($tmp);
+        $xsdFileName = realpath($tmpname);
+      }
+      else
+      {
+       $tmpname = FALSE;
+       $xsdFileName = realpath($entry->getAttribute("schemaLocation"));
+      }
 
       // load XSD file
       $namespace = $entry->getAttribute('namespace');
       $parent = $entry->parentNode;
       $xsd = new \DOMDocument();
-      $xsdFileName = realpath($tmpname);
 
       $this->debugln("Importing: '$schemaFile'", __METHOD__);
 
@@ -345,7 +353,10 @@ class Xsd2Php extends Common
       $parent->removeChild($entry);
 
       // Delete the schema tempfile
-      unlink($tmpname);
+      if ($tmpname)
+      {
+      	unlink($tmpname);
+      }
     }
 
     $xpath = new \DOMXPath($dom);
