@@ -293,7 +293,13 @@ class Xsd2Php extends Common
       else
       {
        $tmpname = FALSE;
-       $xsdFileName = realpath($entry->getAttribute("schemaLocation"));
+       $location = $entry->getAttribute("schemaLocation");
+       if (substr($location, 0, 1) == '/') {
+       	$xsdFileName = $location;
+       } else {
+       	$xsdFileName = ( empty($xsdFile) ? '.' : dirname($xsdFile) ) . DIRECTORY_SEPARATOR . $location;
+       }
+       $xsdFileName = realpath($xsdFileName);
       }
 
       // load XSD file
@@ -304,7 +310,8 @@ class Xsd2Php extends Common
       $this->debugln("Importing: '$schemaFile'", __METHOD__);
 
       if (!$this->file_exists($xsdFileName)) {
-        $this->println("Error: '$xsdFileName' not found.");
+        $this->println("Error: '$schemaFile' ($xsdFileName) not found.");
+        $parent->removeChild($entry); // Avoid loops if the file is not found
         continue;
       }
       if (in_array($schemaFile, $this->loadedImportFiles)) {
@@ -363,7 +370,7 @@ class Xsd2Php extends Common
     $query = "//*[local-name()='import' and namespace-uri()='http://www.w3.org/2001/XMLSchema']";
     $imports = $xpath->query($query);
     if ($imports->length != 0) {
-      $dom = $this->loadImports($dom);
+      $dom = $this->loadImports($dom, $xsdFileName);
     }
     return $dom;
   }
@@ -383,14 +390,33 @@ class Xsd2Php extends Common
     $includes = $xpath->query($query);
 
     foreach ($includes as $entry) {
-      // copy or download the imported schema to tmpfile
-      $tmpname = tempnam('.', 'schema');
-      $tmp = fopen($tmpname, 'w');
-      fwrite($tmp, file_get_contents($urlpath . $entry->getAttribute("schemaLocation")));
-
+    	$schemaFileParts = explode('/', str_replace('\\', '/', $entry->getAttribute("schemaLocation")));
+    	$schemaFile = array_pop($schemaFileParts);
+    	if (strpos($entry->getAttribute("schemaLocation"), '://') !== FALSE)
+    	{
+    		// copy or download the imported schema to tmpfile
+    		$tmpname = tempnam('/tmp', 'schema');
+    	
+    		$tmp = fopen($tmpname, 'w');
+    		fwrite($tmp, file_get_contents($urlpath . $schemaFile));
+    		fclose($tmp);
+    		$xsdFileName = realpath($tmpname);
+    	}
+    	else
+    	{
+    		$tmpname = FALSE;
+    		$location = $entry->getAttribute("schemaLocation");
+    		if (substr($location, 0, 1) == '/') {
+    			$xsdFileName = $location;
+    		} else {
+    			$xsdFileName = ( empty($xsdFile) ? '.' : dirname($xsdFile) ) . DIRECTORY_SEPARATOR . $location;
+    		}
+    		$xsdFileName = realpath($xsdFileName);
+    	}
+    	 
       $parent = $entry->parentNode;
       $xsd = new \DOMDocument();
-      $xsdFileName = realpath($tmpname);
+
       $this->debugln("Including '$xsdFileName'", __METHOD__);
 
       if (!$this->file_exists($xsdFileName)) {
@@ -427,8 +453,9 @@ class Xsd2Php extends Common
       }
       $parent->removeChild($entry);
 
-      fclose($tmp);
-      unlink($tmpname);
+      if ($tmpname) {
+	      unlink($tmpname);
+      }
     }
 
     $xpath = new \DOMXPath($dom);
@@ -513,9 +540,9 @@ class Xsd2Php extends Common
   }
 
   protected function file_exists($file) {
-    if (file_exists($file)) return TRUE;
+    if (is_file($file)) return TRUE;
     foreach (explode(PATH_SEPARATOR, get_include_path()) as $path) {
-      if (file_exists("$path/$file")) return TRUE;
+      if (is_file("$path/$file")) return TRUE;
     }
     return FALSE;
   }
