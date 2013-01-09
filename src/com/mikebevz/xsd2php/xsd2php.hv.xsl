@@ -201,8 +201,29 @@
 							<xsl:when test="../../@namespace">
 								<property debug="nameElement-TypeColonNamespace"
 									xmlType="element" name="{@name}" type="{substring-after(@type, ':')}"
-									namespace="{../../@namespace}" minOccurs="{@minOccurs}"
+									minOccurs="{@minOccurs}"
 									typeNamespace="{substring-before(@type, ':')}" maxOccurs="{@maxOccurs}">
+								
+									<xsl:variable name="type" select="substring-after(@type, ':')" />
+									<xsl:variable name="lowertype" select="translate($type, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnoqrstuvwxyz')" />
+									<xsl:attribute name="namespace">
+										<xsl:choose>
+											<xsl:when test="//*[@name=$type][@namespace]">
+												<xsl:for-each select="//*[@name=$type][@namespace][1]">
+													<xsl:value-of select="@namespace" />
+												</xsl:for-each>
+											</xsl:when>
+											<xsl:when test="//*[@name=$lowertype][@namespace]">
+												<xsl:for-each select="//*[@name=$lowertype][@namespace][1]">
+													<xsl:value-of select="@namespace" />
+												</xsl:for-each>
+											</xsl:when>
+											<xsl:when test="../../@namespace">
+												<xsl:value-of select="../../@namespace" />
+											</xsl:when>
+										</xsl:choose>
+									</xsl:attribute>
+									
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
