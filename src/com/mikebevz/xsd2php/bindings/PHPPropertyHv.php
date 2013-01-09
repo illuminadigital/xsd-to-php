@@ -363,7 +363,8 @@ class PHPPropertyHv extends PHPCommonHv {
 
   protected function buildParam($incArray = TRUE, $incNull = FALSE) {
     $typeHint = $this->buildTypeHint($incArray);
-    return "{$typeHint}{$this->varName}" . ($incNull?' = NULL':'');
+    // return "{$typeHint}{$this->varName}" . ($incNull?' = NULL':'');
+    return "{$this->varName}" . ($incNull?' = NULL':'');
   }
 
   protected function buildValidateCall($incNull = FALSE) {
@@ -393,11 +394,20 @@ class PHPPropertyHv extends PHPCommonHv {
    */
   public function validator(OutputBuffer $buffer, $indent = "\t") {
     $indent2 = "$indent\t";
-    $typeHint = $this->buildTypeHint();
+    $typeHint = $this->buildTypeHint(FALSE);
 
     $buffer->line('');
-    $buffer->line("{$indent}protected function validate{$this->ucPhpName}({$typeHint}{$this->varName}) {");
+    //$buffer->line("{$indent}protected function validate{$this->ucPhpName}({$typeHint}{$this->varName}) {");
+    $buffer->line("{$indent}protected function validate{$this->ucPhpName}({$this->varName}) {");
 
+    if ($typeHint) {
+    	$buffer->lines(array(
+    		"{$indent2}if ( ! {$this->varName} instanceof {$typeHint}) {",
+    		"{$indent2}{$indent}{$this->varName} = new {$typeHint}({$this->varName});",
+    		"{$indent2}}",
+    	));
+    }
+    
     // Array bounds check:
     if ($this->maxOccurs != 1) {
       $buffer->lines($this->buildBoundsCheck($indent2));
