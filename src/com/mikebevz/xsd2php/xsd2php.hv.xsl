@@ -214,8 +214,28 @@
 							<xsl:otherwise>
 								<property debug="nameElement-TypeColonNoNamespace"
 									xmlType="element" name="{@name}" type="{substring-after(@type, ':')}"
-									namespace="#default#" minOccurs="{@minOccurs}"
+									minOccurs="{@minOccurs}"
 									typeNamespace="{substring-before(@type, ':')}" maxOccurs="{@maxOccurs}">
+
+									<xsl:attribute name="namespace">
+										<xsl:variable name="type" select="substring-after(@type, ':')" />
+										<xsl:variable name="lowertype" select="translate($type, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnoqrstuvwxyz')" />
+										<xsl:choose>
+											<xsl:when test="//*[@name=$type][@namespace]">
+												<xsl:for-each select="//*[@name=$type][@namespace][1]">
+													<xsl:value-of select="@namespace" />
+												</xsl:for-each>
+											</xsl:when>
+											<xsl:when test="//*[@name=$lowertype][@namespace]">
+												<xsl:for-each select="//*[@name=$lowertype][@namespace][1]">
+													<xsl:value-of select="@namespace" />
+												</xsl:for-each>
+											</xsl:when>
+											<xsl:otherwise>
+												<xsl:text>#default#</xsl:text>
+											</xsl:otherwise>
+										</xsl:choose>
+									</xsl:attribute>
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
@@ -376,6 +396,30 @@
 							name="{@name}" type="{substring-after(@type, ':')}"
 							typeNamespace="{substring-before(@type, ':')}" default="{@default}"
 							use="{@use}">
+							
+							<xsl:variable name="type" select="substring-after(@type, ':')" />
+							<xsl:variable name="lowertype" select="translate($type, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnoqrstuvwxyz')" />
+							
+							<xsl:if test="//*[@name=$type or @name=$lowertype][@namespace]">
+								<xsl:attribute name="namespace">
+									<xsl:choose>
+										<xsl:when test="//*[@name=$type][@namespace]">
+											<xsl:for-each select="//*[@name=$type][@namespace][1]">
+												<xsl:value-of select="@namespace" />
+											</xsl:for-each>
+										</xsl:when>
+										<xsl:when test="//*[@name=$lowertype][@namespace]">
+											<xsl:for-each select="//*[@name=$lowertype][@namespace][1]">
+												<xsl:value-of select="@namespace" />
+											</xsl:for-each>
+										</xsl:when>
+										<xsl:otherwise>
+											<xsl:text>#default#</xsl:text>
+										</xsl:otherwise>
+									</xsl:choose>
+								</xsl:attribute>							
+							</xsl:if>
+							
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
