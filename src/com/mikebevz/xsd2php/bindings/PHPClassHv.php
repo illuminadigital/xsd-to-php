@@ -260,10 +260,25 @@ class PHPClassHv extends PHPCommonHv {
         $property->typeValidator($this->buffer);
       }
     }
+    
+    if ($this->dummyProperty) {
+    	$this->sendToString($this->buffer);
+    }
 
     // And finish up
     $this->buffer->line("} // end class {$this->phpName}");
 
     return (string) $this->buffer;
+  }
+  
+  protected function sendToString($buffer, $indent = "\t") {
+  	$indent2 = $indent . $indent;
+  	
+  	$buffer->lines(array(
+  		'',
+  		"{$indent}public function __toString() {",
+  		"{$indent2}return (string) \$this->value;",
+  		"{$indent}}",	
+  	));
   }
 }
