@@ -103,6 +103,14 @@ class PHPPropertyHv extends PHPCommonHv {
     }
 
     $phpProperty->dummyProperty = $myClass->dummyProperty;
+    
+    if (@$phpProperty->info->xmlType == 'attribute') {
+    	// Override the phpType as necessary
+    	if ($phpProperty->parent->normalizeType($phpProperty->type, FALSE) === FALSE)
+    	{
+    		$phpProperty->phpType = 'string'; // Safest default
+    	}
+    }
 
     OXMGen::docBlockProperty($dom, $property, $phpProperty);
 

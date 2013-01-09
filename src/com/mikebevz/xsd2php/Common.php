@@ -267,7 +267,7 @@ class Common {
      *
      * @return string
      */
-    public function normalizeType($type) {
+    public function normalizeType($type, $allowUnknownTypes = TRUE) {
         switch ($type) {
             case 'decimal':
             case 'double':
@@ -314,7 +314,12 @@ class Common {
             case 'unsignedShort':
                 return 'integer';
         }
-        return $type;
+        if ($allowUnknownTypes)
+        {
+        	return $type;
+        }
+        // else
+       	return FALSE;
     }
 
     public function phpTypeToSoap($phpType) {

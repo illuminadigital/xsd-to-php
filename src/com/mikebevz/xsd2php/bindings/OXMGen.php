@@ -61,6 +61,7 @@ class OXMGen {
     elseif (@$phpProperty->xmlType == 'attribute') {
       #println($phpProperty->type, 'XmlAttribute: ' . $modifiers['type']);
       $modifiers['name'] = $phpProperty->name;
+      $modifiers['type'] = $phpProperty->phpType; // Must use the simple PHP Type
       $phpProperty->docBlock->XmlAttribute = static::docBlockPropertyModifiers($modifiers);
     }
     else {
