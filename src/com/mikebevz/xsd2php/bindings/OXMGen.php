@@ -56,17 +56,25 @@ class OXMGen {
     elseif ($phpProperty->simpleType) {
       #println($phpProperty->type, 'XmlText: ' . $modifiers['type']);
       $modifiers['name'] = $phpProperty->name;
+      // Can use any type but must be normalized if not namespaced
+      if (strpos($modifiers['type'], '\\') === FALSE) {
+	    $modifiers['type'] = $phpProperty->phpType;
+      } 
       $phpProperty->docBlock->XmlText = static::docBlockPropertyModifiers($modifiers);
     }
     elseif (@$phpProperty->xmlType == 'attribute') {
       #println($phpProperty->type, 'XmlAttribute: ' . $modifiers['type']);
       $modifiers['name'] = $phpProperty->name;
-      $modifiers['type'] = $phpProperty->phpType; // Must use the simple PHP Type
+      $modifiers['type'] = $phpProperty->phpType; // Must use the simple PHP Type but that was done earlier
       $phpProperty->docBlock->XmlAttribute = static::docBlockPropertyModifiers($modifiers);
     }
     else {
       #println($phpProperty->type, 'XmlElement: ' . $modifiers['type']);
       $modifiers['name'] = $phpProperty->name;
+      // Can use any type but must be normalized if not namespaced
+      if (strpos($modifiers['type'], '\\') === FALSE) {
+	    $modifiers['type'] = $phpProperty->phpType;
+      } 
       $phpProperty->docBlock->XmlElement = static::docBlockPropertyModifiers($modifiers);
     }
   }
