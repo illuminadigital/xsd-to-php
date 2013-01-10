@@ -30,7 +30,7 @@ class OXMGen {
       $namespaceInfo[] = "@XmlNamespace(" . implode(', ', $names) . ')';
     }
 
-    $phpClass->docBlock->XmlNamespaces = $namespaceInfo;
+    // $phpClass->docBlock->XmlNamespaces = $namespaceInfo;
 
     if ($phpClass->dummyProperty!='true') {
       $phpClass->docBlock->XmlEntity = static::docBlockPropertyModifiers($modifiers);
