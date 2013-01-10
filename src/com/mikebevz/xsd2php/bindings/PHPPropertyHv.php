@@ -71,6 +71,26 @@ class PHPPropertyHv extends PHPCommonHv {
         $phpProperty->isArray = true;
       }
     }
+    
+    if ($phpProperty->info->xmlType == 'attribute' && $property->getAttribute('use'))
+    {
+    	switch ($property->getAttribute('use'))
+    	{
+    		case 'required':
+    			$phpProperty->maxOccurs = 1;
+        		$phpProperty->info->xmlMaxOccurs = 1;
+    			$phpProperty->minOccurs = 1;
+        		$phpProperty->info->xmlMinOccurs = 1;
+        		break;
+        		
+    		case 'optional':
+    			$phpProperty->maxOccurs = 1;
+        		$phpProperty->info->xmlMaxOccurs = 1;
+    			$phpProperty->minOccurs = 0;
+        		$phpProperty->info->xmlMinOccurs = 0;
+        		break;
+    	}
+    }
 
     if ($phpProperty->type) {
       $ns = '';
@@ -402,7 +422,7 @@ class PHPPropertyHv extends PHPCommonHv {
 
     if ($typeHint) {
     	$buffer->lines(array(
-    		"{$indent2}if ( ! {$this->varName} instanceof {$typeHint}) {",
+    		$this->minOccurs == 0 ? "{$indent2}if ( ! {$this->varName} instanceof {$typeHint} && ! is_null({$this->varName}) ) {" : "{$indent2}if ( ! {$this->varName} instanceof {$typeHint}) {",
     		"{$indent2}{$indent}{$this->varName} = new {$typeHint}({$this->varName});",
     		"{$indent2}}",
     	));
@@ -485,7 +505,7 @@ class PHPPropertyHv extends PHPCommonHv {
         $phpType = 'bool';
       }
       return array(
-        "{$indent}if (!is_{$phpType}({$varName})) {",
+        $this->minOccurs == 0 ? "{$indent}if ( ! is_{$phpType}({$varName}) && ! is_null({$varName}) ) {" : "{$indent}if (!is_{$phpType}({$varName})) {",
         "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
         "{$indent}}",
       );
