@@ -161,7 +161,7 @@ class PHPClassHv extends PHPCommonHv {
     // Now collect the namespaces to be used...
     $uses = array();
     foreach ($this->usedMap as $type) {
-      $uses[] = $this->parent->phpClasses[$type]->useClause();
+      //$uses[] = $this->parent->phpClasses[$type]->useClause();
     }
 
     return "$namespaceClause\n" . implode("\n", array_filter(array_map('trim', $uses))) . "\n$sourceCode";

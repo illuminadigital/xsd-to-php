@@ -486,8 +486,9 @@ class PHPPropertyHv extends PHPCommonHv {
       $typeHint = 'array';
     }
     else if (!empty($this->parent->classMap[$this->type])) {
-      $typeHint = $this->parent->classMap[$this->type];
-      $this->myClass->addUsed($this->type);
+      //$typeHint = $this->parent->classMap[$this->type];
+      //$this->myClass->addUsed($this->type);
+      $typeHint = '\\' . $this->parent->phpClasses[$this->type]->namespacedType();
     }
 
     return $typeHint ? "$typeHint " : '';

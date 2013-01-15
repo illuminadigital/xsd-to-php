@@ -57,9 +57,10 @@ class PHPSaveFilesDefault extends Common implements \com\mikebevz\xsd2php\iPHPSa
       if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
       }
+      $this->xsd2php->debugln("Generating '{$fullkey}' as '{$targetDir}':{$key}");
       file_put_contents($targetDir . DIRECTORY_SEPARATOR . $key . '.php', $value);
     }
-    $this->xsd2php->debugln("Generated classes saved to '{$this->dest}'", __METHOD__);
+    $this->xsd2php->debugln("Generated classes for '{$namespace}\{$key}' saved to '{$this->dest}'", __METHOD__);
   }
 
   /**
