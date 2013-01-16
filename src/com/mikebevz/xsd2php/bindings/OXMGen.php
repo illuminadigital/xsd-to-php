@@ -51,6 +51,7 @@ class OXMGen {
     if ($phpProperty->dummyProperty=='true' && strpos($modifiers['type'], '\\')===FALSE) {
       #println($phpProperty->type, 'XmlValue: ' . $modifiers['type']);
       $modifiers['name'] = $phpProperty->myClass->name;
+      $modifiers['type'] = $phpProperty->phpType;
       $phpProperty->docBlock->XmlValue = static::docBlockPropertyModifiers($modifiers);
     }
     elseif (@$phpProperty->xmlType == 'attribute') {
