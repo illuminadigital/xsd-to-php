@@ -332,9 +332,12 @@ class Xsd2Php extends Common
         $this->loadedImportFiles[] = $schemaFile;
         $this->loadedImportFiles = array_unique($this->loadedImportFiles);
       }
+      
+      $namespaces = $this->getDocNamespaces($xsd);
+      
       foreach ($xsd->documentElement->childNodes as $node) {
 
-        if ($node->nodeName == $this->xsdNs.":import") {
+        if ($node->nodeName == $this->xsdNs.":import" || $node->nodeName == 'import') {
           // Do not change Namespace for import and include tags
           #$this->debugln("Insert Import {$node->nodeName} NS=" . $node->getAttribute('namespace'), __METHOD__);
 
@@ -352,6 +355,15 @@ class Xsd2Php extends Common
           $newNodeNs->appendChild($textEl);
           $node->appendChild($newNodeNs);
 
+          if ( ! empty($namespaces) ) {
+          	foreach ($namespaces as $prefix => $url) {
+          		$newNodeNs = $xsd->createAttribute("xmlns:" . $prefix);
+          		$textEl = $xsd->createTextNode($url);
+          		$newNodeNs->appendChild($textEl);
+          		$node->appendChild($newNodeNs);
+          	}
+          }
+          
           $newNode = $dom->importNode($node, true);
           $parent->insertBefore($newNode, $entry);
         }
@@ -431,6 +443,9 @@ class Xsd2Php extends Common
         $this->shortNamespaces = array_merge($this->shortNamespaces, $this->getNamespaces($mxpath));
 
       }
+      
+      $namespaces = $this->getDocNamespaces($xsd);
+
       foreach ($xsd->documentElement->childNodes as $node) {
         if ($node->nodeName == "{$this->xsdNs}:include") {
           $loc = realpath($filepath.DIRECTORY_SEPARATOR.$node->getAttribute('schemaLocation'));
@@ -445,6 +460,15 @@ class Xsd2Php extends Common
             $textEl = $xsd->createTextNode($namespace);
             $newNodeNs->appendChild($textEl);
             $node->appendChild($newNodeNs);
+          }
+          
+          if ( ! empty($namespaces) ) {
+          	foreach ($namespaces as $prefix => $url) {
+          		$newNodeNs = $xsd->createAttribute("xmlns:" . $prefix);
+          		$textEl = $xsd->createTextNode($url);
+          		$newNodeNs->appendChild($textEl);
+          		$node->appendChild($newNodeNs);
+          	}
           }
 
           $newNode = $dom->importNode($node, true);

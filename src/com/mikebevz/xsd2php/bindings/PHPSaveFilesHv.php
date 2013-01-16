@@ -86,6 +86,9 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
       $ns = preg_replace('/:/','\\', $ns);
     }
 
+    // Remove '#'
+    $ns = str_replace('#', '', $ns);
+    
     $matches = array();
     if (preg_match("#((http|https|ftp)://(\S*?\.\S*?))(\s|\;|\)|\]|\[|\{|\}|,|\"|'|:|\<|$|\.\s)#", $ns, $matches)) {
       $elements = explode("/", $matches[3]);
@@ -96,13 +99,22 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
       //$ns = preg_replace('/\./', '\\', );
       //print $ns."\n";
       foreach($elements as $key => $value) {
-        if ($value != '') {
+      	if ($value != '') {
           $value = preg_replace('/\./', '_', $value);
           $ns .= "\\" . $value;
         }
       }
+    } else {
+    	$elements = array();
+    	foreach (explode('.', $ns) as $value) {
+	      	if ($value != '') {
+	          $value = preg_replace('/\./', '_', $value);
+	          $elements[] = $value;
+	        }
+    	}
+    	
+    	$ns = implode('\\', $elements);
     }
-
 
     $ns = explode('\\', $ns);
     $i = 0;
@@ -138,7 +150,9 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
       $ns = preg_replace('/:/', DIRECTORY_SEPARATOR, $ns);
     }
 
-
+    // Remove '#'
+    $ns = str_replace('#', '', $ns);
+    
     $matches = array();
     if (preg_match("#((http|https|ftp)://(\S*?\.\S*?))(\s|\;|\)|\]|\[|\{|\}|,|\"|'|:|\<|$|\.\s)#", $ns, $matches)) {
       $elements = explode("/", $matches[3]);
@@ -154,6 +168,16 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
           $ns .= DIRECTORY_SEPARATOR . $value;
         }
       }
+    } else {
+    	$elements = array();
+    	foreach (explode('.', $ns) as $value) {
+	      	if ($value != '') {
+	          $value = preg_replace('/\./', '_', $value);
+	          $elements[] = $value;
+	        }
+    	}
+    	
+    	$ns = implode('/', $elements);
     }
 
     $ns = explode(DIRECTORY_SEPARATOR, $ns);

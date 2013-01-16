@@ -34,7 +34,7 @@ class PHPClassHv extends PHPCommonHv {
     }
 
     if ($extension = $class->getAttribute('extends')) {
-      if (!$phpClass->parent->isBasicType($extension)) {
+      if (!$phpClass->parent->isBasicType($extension) && strpos($extension, ':') !== FALSE) {
         list($ns, $extension) = explode(':', $extension);
  #   println($extension, $ns);
  #       if (!$extension) {
@@ -42,7 +42,12 @@ class PHPClassHv extends PHPCommonHv {
  #         $ns = '';
  #       }
         $phpClass->extends = $phpClass->type = $extension;
-        $phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($ns);
+        if ($ns == 'this' && $phpClass->namespace != '#default#') {
+        	$phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($phpClass->namespace);
+        }
+        else {
+        	$phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($ns);
+        }
       }
     }
     elseif ($class->getElementsByTagName('extends')->length > 0) {
@@ -218,14 +223,12 @@ class PHPClassHv extends PHPCommonHv {
     if ($this->extends != '') {
       $extension = static::phpIdentifier($this->extends, FALSE);
       if ($this->extendsNamespace != '') {
-        $nsLastName = array_reverse(explode('\\', $this->extendsNamespace));
-        $path = $this->parent->namespaceToPhp($nsLastName[0]);
-        $path = str_replace('.', '\\', $path);
+      	$path = $this->parent->namespaceToPhp($this->extendsNamespace);
         $define .= " extends \\{$path}\\{$extension}";
       } else {
         $define .= " extends {$extension}";
       }
-      $this->buffer->line($this->buildUseClause($this->extendsNamespace, $extension));
+      //$this->buffer->line($this->buildUseClause($this->extendsNamespace, $extension));
     }
 
     // Send the class docBlock
