@@ -307,7 +307,7 @@
 							</xsl:otherwise>
 						</xsl:choose>
 					</xsl:when>
-					<xsl:otherwise>
+					<xsl:when test="@type">
 						<property debug="nameElement-TypeNoColon" xmlType="element"
 							name="{@name}" type="{@type}" namespace="#default#"
 							typeNamespace="#default#" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
@@ -319,6 +319,18 @@
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
 						</property>
 
+					</xsl:when>
+					<xsl:otherwise>
+						<property debug="nameElement-NoType" xmlType="element"
+							name="{@name}" type="{@name}" namespace="#default#"
+							typeNamespace="#default#" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+								<xsl:apply-templates
+									select="*[local-name()='restriction' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+						</property>
 					</xsl:otherwise>
 				</xsl:choose>
 			</xsl:when>
