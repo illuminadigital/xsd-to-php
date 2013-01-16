@@ -20,7 +20,7 @@ class PHPPropertyHv extends PHPCommonHv {
 
     $phpProperty->type = $property->getAttribute('type');
     $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
-    $phpProperty->simpleType = $phpProperty->parent->isPHPType($phpProperty->type);
+    $phpProperty->simpleType = $phpProperty->parent->isBasicType($phpProperty->type);
 
     $ns = trim($property->getAttribute('namespace'));
     $tns = trim($property->getAttribute('typeNamespace'));
