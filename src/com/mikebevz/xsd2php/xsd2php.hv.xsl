@@ -22,67 +22,18 @@
 				<xsl:for-each
 					select="*[local-name()='element' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']">
-					<xsl:choose>
-						<xsl:when test="@namespace">
-							<xsl:choose>
-								<xsl:when test="contains(@type, ':')">
-									<xsl:variable name="ns" select="substring-before(@type,':')" />
-									<xsl:variable name="nspace">
-										<xsl:for-each select="ancestor-or-self::*/@*[name()=concat('xmlns:', $ns)]">
-											<xsl:value-of select="." />
-										</xsl:for-each>
-									</xsl:variable>
-									
-									<class debug="1.0.1" name="{@name}" type="{substring-after(@type,':')}"
-										namespace="{$nspace}">
-										<extends debug="1.0Extend" name="{substring-after(@type,':')}">
-											<xsl:attribute name="namespace">
-												<xsl:value-of select="$nspace"/>
-											</xsl:attribute>
-										</extends>
-										<xsl:apply-templates />
-									</class>
-								</xsl:when>
-								<xsl:otherwise>
-									<class debug="1.0" name="{@name}" namespace="{@namespace}">
-										<extends debug="1.0Extend" name="{@type}" />
-										<xsl:apply-templates />
-									</class>
-								</xsl:otherwise>
-							</xsl:choose>
-						</xsl:when>
-						<xsl:when test="*[local-name='complexType']/@name=''">
-							<class debug="1.2" name="{@name}" namespace="{@namespace}">
-								<extends debug="1.0Extend" name="{@type}" />
-								<xsl:apply-templates />
-							</class>
-						</xsl:when>
-						<xsl:when test="*[local-name='simpleType']/@name=''">
-							<xsl:variable name="baseType" select="current()/*[local-name()='restriction']/@base" />
-							<class debug="1.3" name="{@name}" extends="{$baseType}" namespace="{@namespace}">
-								<xsl:apply-templates />
-							</class>
-						</xsl:when>
-						<xsl:otherwise>
-							<xsl:choose>
-								<xsl:when test="contains(@type, ':')">
-									<class debug="1.4" name="{@name}" type="{substring-after(@type,':')}"
-										namespace="{$targetNamespace}">
-										<extends debug="1.1Extend" name="{substring-after(@type,':')}"
-											namespace="{substring-before(@type,':')}" />
-										<xsl:apply-templates />
-									</class>
-								</xsl:when>
-								<xsl:otherwise>
-									<class debug="1.4-1" name="{@name}" type="{@type}"
-										namespace="{$targetNamespace}">
-										<extends debug="1.2Extend" name="{@type}" />
-										<xsl:apply-templates />
-									</class>
-								</xsl:otherwise>
-							</xsl:choose>
-						</xsl:otherwise>
-					</xsl:choose>
+					
+					<xsl:call-template name="processElement">
+						<xsl:with-param name="targetNamespace" select="$targetNamespace" />
+					</xsl:call-template>
+				</xsl:for-each>
+				
+				<xsl:for-each select="*/*//*[local-name()='element' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema' and not(@type)]">
+					
+					<xsl:call-template name="processElement">
+						<xsl:with-param name="targetNamespace" select="$targetNamespace" />
+					</xsl:call-template>
 				</xsl:for-each>
 
 				<xsl:for-each
@@ -594,6 +545,72 @@
 				</doc>
 			</xsl:otherwise>
 		</xsl:choose>
+	</xsl:template>
+	
+	<xsl:template name="processElement">
+		<xsl:param name="targetNamespace" />
+		
+					<xsl:choose>
+						<xsl:when test="@namespace">
+							<xsl:choose>
+								<xsl:when test="contains(@type, ':')">
+									<xsl:variable name="ns" select="substring-before(@type,':')" />
+									<xsl:variable name="nspace">
+										<xsl:for-each select="ancestor-or-self::*/@*[name()=concat('xmlns:', $ns)]">
+											<xsl:value-of select="." />
+										</xsl:for-each>
+									</xsl:variable>
+									
+									<class debug="1.0.1" name="{@name}" type="{substring-after(@type,':')}"
+										namespace="{$nspace}">
+										<extends debug="1.0Extend" name="{substring-after(@type,':')}">
+											<xsl:attribute name="namespace">
+												<xsl:value-of select="$nspace"/>
+											</xsl:attribute>
+										</extends>
+										<xsl:apply-templates />
+									</class>
+								</xsl:when>
+								<xsl:otherwise>
+									<class debug="1.0" name="{@name}" namespace="{@namespace}">
+										<extends debug="1.0Extend" name="{@type}" />
+										<xsl:apply-templates />
+									</class>
+								</xsl:otherwise>
+							</xsl:choose>
+						</xsl:when>
+						<xsl:when test="*[local-name='complexType']/@name=''">
+							<class debug="1.2" name="{@name}" namespace="{@namespace}">
+								<extends debug="1.0Extend" name="{@type}" />
+								<xsl:apply-templates />
+							</class>
+						</xsl:when>
+						<xsl:when test="*[local-name='simpleType']/@name=''">
+							<xsl:variable name="baseType" select="current()/*[local-name()='restriction']/@base" />
+							<class debug="1.3" name="{@name}" extends="{$baseType}" namespace="{@namespace}">
+								<xsl:apply-templates />
+							</class>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:choose>
+								<xsl:when test="contains(@type, ':')">
+									<class debug="1.4" name="{@name}" type="{substring-after(@type,':')}"
+										namespace="{$targetNamespace}">
+										<extends debug="1.1Extend" name="{substring-after(@type,':')}"
+											namespace="{substring-before(@type,':')}" />
+										<xsl:apply-templates />
+									</class>
+								</xsl:when>
+								<xsl:otherwise>
+									<class debug="1.4-1" name="{@name}" type="{@type}"
+										namespace="{$targetNamespace}">
+										<extends debug="1.2Extend" name="{@type}" />
+										<xsl:apply-templates />
+									</class>
+								</xsl:otherwise>
+							</xsl:choose>
+						</xsl:otherwise>
+					</xsl:choose>
 	</xsl:template>
 
 </xsl:stylesheet>
