@@ -529,7 +529,7 @@ class Xsd2Php extends Common
    * @return DOMDocument
    */
   public function getXML() {
-    try {
+  	try {
       $xslDom = new \DOMDocument();
       $xsl    = new \XSLTProcessor();
       $xslFile = '/xsd2php.' . strtolower($this->binding) . '.xsl';
@@ -540,6 +540,7 @@ class Xsd2Php extends Common
       $dom->formatOutput = true;
 
       $fname = implode('.', array_slice(explode('.', basename($this->xsdFile)), 0, -1));
+  	  file_put_contents(dirname(__FILE__) . sprintf('/tmp/%s.inter.xml', $fname), $this->dom->saveXML() . "\n");
       file_put_contents(dirname(__FILE__) . sprintf('/tmp/%s.xml', $fname), $dom->saveXML() . "\n");
 
       return $dom;

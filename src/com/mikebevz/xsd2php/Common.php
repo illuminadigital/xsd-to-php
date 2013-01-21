@@ -43,6 +43,7 @@ class Common {
                                 'QName', 'short', 'string', 'time', 'token',
                                 'unsignedByte', 'unsignedInt', 'unsignedLong', 'unsignedShort',
     							'anyType',
+    							'NCName',
                                 );
 
     public $phpTypes = array(
@@ -293,6 +294,7 @@ class Common {
             case 'string':
             case 'time':
             case 'token':
+            case 'NCName':
                 return 'string';
 
             case 'bool':
