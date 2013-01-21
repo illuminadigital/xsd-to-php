@@ -33,6 +33,14 @@ class PHPClassHv extends PHPCommonHv {
       $phpClass->namespace = '#default#';
     }
 
+    if ($class->getAttribute('id') != '') {
+    	$phpClass->constants[] = array('name' => 'ID', 'value' => "'" . $class->getAttribute('id') . "'"); 
+    }
+    
+    if ($class->getAttribute('refName') != '') {
+    	$phpClass->constants[] = array('name' => 'NAME', 'value' => "'" . $class->getAttribute('refName') . "'"); 
+    }
+    
     if ($extension = $class->getAttribute('extends')) {
       if (!$phpClass->parent->isBasicType($extension) && strpos($extension, ':') !== FALSE) {
         list($ns, $extension) = explode(':', $extension);
@@ -148,6 +156,13 @@ class PHPClassHv extends PHPCommonHv {
    * @var object OutputBuffer
    */
   protected $buffer;
+  
+  /**
+   * An array of constants
+   * 
+   * @var array of arrays
+   */
+  protected $constants = array();
 
   protected function __construct(PHPSaveFilesDefault $parent) {
     parent::__construct($parent);
@@ -239,6 +254,15 @@ class PHPClassHv extends PHPCommonHv {
     $this->buffer->line("\t/**");
     $this->buffer->lines($this->textInfo, "\t * ");
     $this->buffer->line("\t */");
+    
+    // Handle the constants
+    if ( ! empty($this->constants)) {
+    	$this->buffer->line();
+
+	    foreach ($this->constants as $constant) {
+	    	$this->buffer->line("\tconst {$constant['name']} = {$constant['value']};");
+	    }
+    }
 
     // Output all the property enumerations
     foreach ($this->classProperties as $property) {
@@ -258,7 +282,7 @@ class PHPClassHv extends PHPCommonHv {
       $property->creator($this->buffer);
       $property->setter($this->buffer);
       $property->validator($this->buffer);
-      if ($property->maxOccurs!=1) {
+      if ($property->isArray) {
         $property->adder($this->buffer);
         $property->typeValidator($this->buffer);
       }

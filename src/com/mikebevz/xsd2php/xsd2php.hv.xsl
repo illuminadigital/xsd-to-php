@@ -25,6 +25,7 @@
 					
 					<xsl:call-template name="processElement">
 						<xsl:with-param name="targetNamespace" select="$targetNamespace" />
+						<xsl:with-param name="isTopLevel" select="'true'" />
 					</xsl:call-template>
 				</xsl:for-each>
 				
@@ -33,6 +34,7 @@
 					
 					<xsl:call-template name="processElement">
 						<xsl:with-param name="targetNamespace" select="$targetNamespace" />
+						<xsl:with-param name="isTopLevel" select="'false'" />
 					</xsl:call-template>
 				</xsl:for-each>
 
@@ -549,6 +551,7 @@
 	
 	<xsl:template name="processElement">
 		<xsl:param name="targetNamespace" />
+		<xsl:param name="isTopLevel" select="'false'" />
 		
 					<xsl:choose>
 						<xsl:when test="@namespace">
@@ -598,6 +601,13 @@
 										namespace="{$targetNamespace}">
 										<extends debug="1.1Extend" name="{substring-after(@type,':')}"
 											namespace="{substring-before(@type,':')}" />
+										<xsl:apply-templates />
+									</class>
+								</xsl:when>
+								<xsl:when test="ancestor::*[local-name()='schema']/*[local-name()='annotation']/*[local-name() = 'documentation']/*[local-name() = 'type-id']">
+									<class debug="1.4-2" name="{@name}" type="{@type}"
+										namespace="{$targetNamespace}" id="{ancestor::*[local-name()='schema']/*[local-name()='annotation']/*[local-name() = 'documentation']/*[local-name() = 'type-id']}" refName="{ancestor::*[local-name()='schema']/*[local-name()='annotation']/*[local-name() = 'documentation']/*[local-name() = 'type-name']}">
+										<extends debug="1.2Extend" name="com.microsoft.wc.thing.Thing" />
 										<xsl:apply-templates />
 									</class>
 								</xsl:when>
