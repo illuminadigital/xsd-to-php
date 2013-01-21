@@ -599,8 +599,27 @@
 								<xsl:when test="contains(@type, ':')">
 									<class debug="1.4" name="{@name}" type="{substring-after(@type,':')}"
 										namespace="{$targetNamespace}">
-										<extends debug="1.1Extend" name="{substring-after(@type,':')}"
-											namespace="{substring-before(@type,':')}" />
+										<extends debug="1.1Extend" name="{substring-after(@type,':')}">
+											<xsl:attribute name="namespace">
+											<xsl:variable name="type" select="substring-after(@type, ':')" />
+											<xsl:variable name="lowertype" select="translate($type, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnoqrstuvwxyz')" />
+											<xsl:choose>
+												<xsl:when test="//*[@name=$type][@namespace]">
+													<xsl:for-each select="//*[@name=$type][@namespace][1]">
+														<xsl:value-of select="@namespace" />
+													</xsl:for-each>
+												</xsl:when>
+												<xsl:when test="//*[@name=$lowertype][@namespace]">
+													<xsl:for-each select="//*[@name=$lowertype][@namespace][1]">
+														<xsl:value-of select="@namespace" />
+													</xsl:for-each>
+												</xsl:when>
+												<xsl:otherwise>
+													<xsl:text>#default#</xsl:text>
+												</xsl:otherwise>
+											</xsl:choose>
+										</xsl:attribute>
+										</extends>
 										<xsl:apply-templates />
 									</class>
 								</xsl:when>
