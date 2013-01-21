@@ -69,12 +69,28 @@
 							<xsl:when test="contains($extends, ':')">
 								<xsl:value-of select="substring-after($extends, ':')" />
 							</xsl:when>
+							<xsl:when test="current()/*[local-name()='union']">
+								<!-- Not ideal handling, but -->
+								<xsl:text>anyType</xsl:text>
+							</xsl:when>
 							<xsl:otherwise>
 								<xsl:value-of select="$extends" />
 							</xsl:otherwise>
 						</xsl:choose>
 					</xsl:variable>
 					<xsl:choose>
+						<xsl:when test="$type='anyType'">
+							<class debug="1.3-3 - AnyType" name="{@name}" extends="{$type}"
+								type="{$type}" namespace="{@namespace}" dummyProperty="true">
+								<property debug="Dummy-Property-2" xmlType="element"
+									name="value" type="{$type}" 
+									typeNamespace="#default#">
+								<xsl:apply-templates
+									select="*[local-name()='annotation' and
+					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
+								</property>
+							</class>
+						</xsl:when>
 						<xsl:when test="@namespace">
 							<class debug="1.3-1" name="{@name}" extends="{$extends}" type="{$type}"
 								namespace="{@namespace}" dummyProperty="true">

@@ -41,7 +41,8 @@ class Common {
                                 'negativeInteger', 'nonPositiveInteger', 'nonNegativeInteger',
                                 //'Name', 'NSName', 'NMTOKEN', 'NMTOKENS', 'NOTATION',
                                 'QName', 'short', 'string', 'time', 'token',
-                                'unsignedByte', 'unsignedInt', 'unsignedLong', 'unsignedShort'
+                                'unsignedByte', 'unsignedInt', 'unsignedLong', 'unsignedShort',
+    							'anyType',
                                 );
 
     public $phpTypes = array(
@@ -313,6 +314,9 @@ class Common {
             case 'unsignedLong':
             case 'unsignedShort':
                 return 'integer';
+                
+            case 'anyType':
+            	return 'string';    
         }
         if ($allowUnknownTypes)
         {
