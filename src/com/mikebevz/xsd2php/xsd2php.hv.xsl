@@ -63,10 +63,10 @@
 				<xsl:for-each
 					select="//*[local-name()='simpleType' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']">
-					<xsl:variable name="extends" select="current()/*[local-name()='restriction']/@base" />
+					<xsl:variable name="extends" select="current()//*[local-name()='restriction']/@base" />
 					<xsl:variable name="type">
 						<xsl:choose>
-							<xsl:when test="contains($extends, ':')">
+							<xsl:when test="count($extends) = 1 and contains($extends, ':')">
 								<xsl:value-of select="substring-after($extends, ':')" />
 							</xsl:when>
 							<xsl:when test="current()/*[local-name()='union']">
@@ -159,9 +159,16 @@
 				<xsl:variable name="ns" select="substring-before(@ref,':')" />
 				
 				<xsl:variable name="nspace">
-					<xsl:for-each select="ancestor-or-self::*/@*[name()=concat('xmlns:', $ns)]">
-						<xsl:value-of select="." />
-					</xsl:for-each>
+					<xsl:choose>
+						<xsl:when test="ancestor-or-self::*/@*[name()=concat('xmlns:', $ns)]">
+							<xsl:for-each select="ancestor-or-self::*/@*[name()=concat('xmlns:', $ns)]">
+								<xsl:value-of select="." />
+							</xsl:for-each>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:text>#default#</xsl:text>
+						</xsl:otherwise>
+					</xsl:choose>
 				</xsl:variable>
 				
 				<property debug="refElement" xmlType="element"
