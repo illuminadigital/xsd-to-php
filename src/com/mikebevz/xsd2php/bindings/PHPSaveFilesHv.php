@@ -33,7 +33,9 @@ class PHPSaveFilesHv extends \com\mikebevz\xsd2php\PHPSaveFilesDefault {
       $this->classMap[$phpClass->xmlName] = $phpClass->phpName;
 
       // Save it, such that we can index into it
-      $this->phpClasses[$phpClass->xmlName] = $phpClass;
+      $key = strtolower("{$phpClass->xmlName}|{$phpClass->namespace}");
+      
+      $this->phpClasses[$key] = $phpClass;
     }
 
     // Now create the output

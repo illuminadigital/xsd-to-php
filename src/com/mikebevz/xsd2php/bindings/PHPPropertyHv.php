@@ -14,11 +14,22 @@ class PHPPropertyHv extends PHPCommonHv {
     $phpProperty = new static($myClass->parent, $myClass);
 
     $phpProperty->name = $property->getAttribute('name');
-    $phpProperty->phpName = static::phpIdentifier($phpProperty->name);
-    $phpProperty->ucPhpName = ucfirst($phpProperty->phpName);
-    $phpProperty->varName = "\${$phpProperty->phpName}";
 
-    $phpProperty->type = $property->getAttribute('type');
+    if (substr($phpProperty->name, 0, 1) == '*') {
+    	$phpProperty->phpName = static::phpIdentifier(substr($phpProperty->name, 1));
+    	$phpProperty->name = '*';
+    	$phpProperty->isArray = TRUE;
+    	$phpProperty->minOccurs = 0;
+    	$phpProperty->maxOccurs = 0;
+    	$phpProperty->type = 'AnyMixed';
+    } else {
+	    $phpProperty->phpName = static::phpIdentifier($phpProperty->name);
+    	$phpProperty->type = $property->getAttribute('type');
+    }
+    
+	$phpProperty->ucPhpName = ucfirst($phpProperty->phpName);
+	$phpProperty->varName = "\${$phpProperty->phpName}";
+    
     $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
     $phpProperty->simpleType = $phpProperty->parent->isBasicType($phpProperty->type);
 
@@ -488,7 +499,16 @@ class PHPPropertyHv extends PHPCommonHv {
     else if (!empty($this->parent->classMap[$this->type])) {
       //$typeHint = $this->parent->classMap[$this->type];
       //$this->myClass->addUsed($this->type);
-      $typeHint = '\\' . $this->parent->phpClasses[$this->type]->namespacedType();
+
+      $key = strtolower("{$this->type}|{$this->namespace}");
+      
+      if (array_key_exists($key, $this->parent->phpClasses)) {
+	      $typeHint = '\\' . $this->parent->phpClasses[$key]->namespacedType();
+      }
+#      else {
+#      	echo "Skipping non-existant $key\n";
+#      	var_dump($this);
+#      }
     }
 
     return $typeHint ? "$typeHint " : '';

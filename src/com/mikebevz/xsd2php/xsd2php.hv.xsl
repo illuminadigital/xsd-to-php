@@ -146,8 +146,32 @@
 	<!-- any -->
 	<xsl:template
 		match="*[local-name()='any' and namespace-uri()='http://www.w3.org/2001/XMLSchema']">
-		<any name="{local-name()}" />
-		<xsl:apply-templates />
+		<property debug="any" targetNamespace="{@namespace}">
+			<xsl:attribute name="name">
+				<xsl:text>*</xsl:text>
+				<xsl:choose>
+					<xsl:when test="@name">
+						<xsl:value-of select="@name" />
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:value-of select="local-name()" />
+					</xsl:otherwise>
+				</xsl:choose>
+			</xsl:attribute>
+			<xsl:attribute name="namespace">
+				<xsl:choose>
+					<xsl:when test="ancestor::*[@namespace]">
+						<xsl:value-of select="ancestor::*[@namespace][1]/@namespace" />
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:value-of select="ancestor::*[@targetNamespace][1]/@targetNamespace" />
+					</xsl:otherwise>
+				</xsl:choose>
+				
+			</xsl:attribute>
+			
+			<xsl:apply-templates />
+		</property>
 	</xsl:template>
 
 	<!-- element -->
