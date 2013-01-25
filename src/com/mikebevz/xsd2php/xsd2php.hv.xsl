@@ -142,6 +142,18 @@
 		match="*[local-name()='sequence' and namespace-uri()='http://www.w3.org/2001/XMLSchema']">
 		<xsl:apply-templates />
 	</xsl:template>
+	
+	<!-- Group -->
+	<xsl:template 
+		match="*[local-name()='group' and @ref and namespace-uri()='http://www.w3.org/2001/XMLSchema']">
+		
+		<xsl:variable name="groupLocalname" select="substring-after(@ref, ':')" />
+		<xsl:variable name="groupNamespace" select="substring-before(@ref, ':')" />
+		
+		<xsl:for-each select="//*[local-name()='group' and @name=$groupLocalname]/*[local-name()='sequence']">
+			<xsl:apply-templates />
+		</xsl:for-each>
+	</xsl:template>
 
 	<!-- any -->
 	<xsl:template
