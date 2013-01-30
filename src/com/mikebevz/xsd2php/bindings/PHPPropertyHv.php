@@ -431,13 +431,23 @@ class PHPPropertyHv extends PHPCommonHv {
     //$buffer->line("{$indent}protected function validate{$this->ucPhpName}({$typeHint}{$this->varName}) {");
     $buffer->line("{$indent}protected function validate{$this->ucPhpName}({$this->varName}) {");
 
-    if ($typeHint) {
-    	$buffer->lines(array(
-    		$this->minOccurs == 0 ? "{$indent2}if ( ! {$this->varName} instanceof {$typeHint} && ! is_null({$this->varName}) ) {" : "{$indent2}if ( ! {$this->varName} instanceof {$typeHint}) {",
-    		"{$indent2}{$indent}{$this->varName} = new {$typeHint}({$this->varName});",
-    		"{$indent2}}",
-    	));
-    }
+    if ($typeHint)
+    {
+       if ($this->maxOccurs == 1) {
+        	$buffer->lines(array(
+        		$this->minOccurs == 0 ? "{$indent2}if ( ! {$this->varName} instanceof {$typeHint} && ! is_null({$this->varName}) ) {" : "{$indent2}if ( ! {$this->varName} instanceof {$typeHint}) {",
+        		"{$indent2}{$indent}{$this->varName} = new {$typeHint}({$this->varName});",
+        		"{$indent2}}",
+        	));
+       }
+       else {
+            $buffer->lines(array(
+                $this->minOccurs == 0 ? "{$indent2}if ( ! is_array ({$this->varName}) && ! is_null({$this->varName}) ) {" : "{$indent2}if ( ! is_array ({$this->varName}) ) {",
+                "{$indent2}{$indent}{$this->varName} = array({$this->varName});",
+                "{$indent2}}",
+            ));
+       }
+    } 
     
     // Array bounds check:
     if ($this->maxOccurs != 1) {
