@@ -496,6 +496,9 @@ class PHPPropertyHv extends PHPCommonHv {
     if ($incArray && $this->maxOccurs!=1) {
       $typeHint = 'array';
     }
+#    else if ( $this->type == 'AnyMixed') {
+#      $typeHint = $this->nameSpacedType(FALSE);
+#    }
     else if (!empty($this->parent->classMap[$this->type])) {
       //$typeHint = $this->parent->classMap[$this->type];
       //$this->myClass->addUsed($this->type);
@@ -524,6 +527,8 @@ class PHPPropertyHv extends PHPCommonHv {
       $phpType = $this->phpType;
       if ($phpType=='boolean') {
         $phpType = 'bool';
+      } else if ($phpType == 'AnyMixed') {
+        $phpType = 'object';
       }
       return array(
         $this->minOccurs == 0 ? "{$indent}if ( ! is_{$phpType}({$varName}) && ! is_null({$varName}) ) {" : "{$indent}if (!is_{$phpType}({$varName})) {",
