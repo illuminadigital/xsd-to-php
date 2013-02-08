@@ -92,11 +92,26 @@
 							</class>
 						</xsl:when>
 						<xsl:when test="@namespace">
+							<xsl:variable name="typeNamespace">
+								<xsl:choose>
+									<xsl:when test="contains($extends, ':')">
+										<xsl:variable name="ns" select="substring-before($extends, ':')" />
+										<xsl:for-each select="ancestor-or-self::*/@*[name()=concat('xmlns:', $ns)]">
+											<xsl:value-of select="." />
+										</xsl:for-each>
+									</xsl:when>
+									<xsl:when test="/*[local-name()='schema']">
+										<xsl:for-each select="/*[local-name()='schema']">
+											<xsl:value-of select="namespace-uri()" />
+										</xsl:for-each>
+									</xsl:when>
+								</xsl:choose>
+							</xsl:variable>
 							<class debug="1.3-1" name="{@name}" extends="{$extends}" type="{$type}"
 								namespace="{@namespace}" dummyProperty="true">
 								<property debug="Dummy-Property-1" xmlType="element"
 									name="value" type="{$type}" namespace="{@namespace}"
-									typeNamespace="{@namespace}">
+									typeNamespace="{$typeNamespace}">
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
@@ -273,6 +288,9 @@
 											<xsl:when test="../../@namespace">
 												<xsl:value-of select="../../@namespace" />
 											</xsl:when>
+											<xsl:when test="/schema[@xmlns]">
+												<xsl:value-of select="/schema/@namespace" />
+											</xsl:when>
 										</xsl:choose>
 									</xsl:attribute>
 									
@@ -321,8 +339,20 @@
 					</xsl:when>
 					<xsl:when test="@type">
 						<property debug="nameElement-TypeNoColon" xmlType="element"
-							name="{@name}" type="{@type}" namespace="#default#"
+							name="{@name}" type="{@type}"
 							typeNamespace="#default#" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+								<xsl:attribute name="namespace">
+									<xsl:choose>
+										<xsl:when test="/*[local-name()='schema']">
+											<xsl:for-each select="/*[local-name()='schema']">
+												<xsl:value-of select="namespace-uri()" />
+											</xsl:for-each>
+										</xsl:when>
+										<xsl:otherwise>
+											<xsl:text>#default#</xsl:text>
+										</xsl:otherwise>
+									</xsl:choose>
+								</xsl:attribute>
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
@@ -353,7 +383,18 @@
 	<!-- restriction -->
 	<xsl:template
 		match="*[local-name()='restriction' and namespace-uri()='http://www.w3.org/2001/XMLSchema']">
-		<xsl:variable name="targetNamespace" select="@targetNamespace" />
+		<xsl:variable name="targetNamespace">
+			<xsl:choose>
+				<xsl:when test="@targetNamespace">
+					<xsl:value-of select="@targetNamespace" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:for-each select="/*[local-name()='schema']">
+						<xsl:value-of select="namespace-uri()" />
+					</xsl:for-each>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
 		<xsl:choose>
 			<xsl:when test="contains(@base, ':')">
 				<extends debug="ColonBase" name="{substring-after(@base,':')}">
@@ -361,15 +402,7 @@
 					<xsl:variable name="nspace" select="substring-before(@base,':')" />
 					<xsl:attribute name="namespace">
 						<xsl:for-each select="//*[@name=$type]/ancestor-or-self::*/@*[name()=concat('xmlns:', $nspace)]">
-<!-- 							<xsl:for-each select="ancestor-or-self::*/@*">
-								<xsl:value-of select="name()" />
-								<xsl:if test="name()=concat('xmlns:', $nspace)" >
-									<xsl:text>=</xsl:text>
-									-->
-									<xsl:value-of select="." />
-<!--								</xsl:if>
-							</xsl:for-each>
-							-->
+							<xsl:value-of select="." />
 						</xsl:for-each>
 					</xsl:attribute>
 				</extends>

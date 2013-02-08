@@ -30,9 +30,6 @@ class PHPPropertyHv extends PHPCommonHv {
 	$phpProperty->ucPhpName = ucfirst($phpProperty->phpName);
 	$phpProperty->varName = "\${$phpProperty->phpName}";
     
-    $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
-    $phpProperty->simpleType = $phpProperty->parent->isBasicType($phpProperty->type);
-
     $ns = trim($property->getAttribute('namespace'));
     $tns = trim($property->getAttribute('typeNamespace'));
     $ns = empty($ns) ? $tns : $ns;
@@ -40,6 +37,22 @@ class PHPPropertyHv extends PHPCommonHv {
     $phpProperty->namespace = $phpProperty->parent->expandNS($ns);
     $phpProperty->typeNamespace = $phpProperty->parent->expandNS($tns);
 
+    $phpProperty->simpleType = (empty($tns) || $tns == 'http://www.w3.org/2001/XMLSchema' || empty($ns) || $ns == 'http://www.w3.org/2001/XMLSchema') && $phpProperty->parent->isBasicType($phpProperty->type);
+    if ($phpProperty->simpleType) {
+        // Only attempt to normalize simple types to avoid cross-namespace issues with well known types 
+        $phpProperty->phpType = $phpProperty->parent->normalizeType($phpProperty->type);
+    } else {
+        $phpProperty->phpType = $phpProperty->type;
+    }
+    
+    error_log('>>>>>>>> ' . $myClass->name);
+    error_log('phpName: ' . $phpProperty->phpName);
+    error_log('name: ' . $phpProperty->name);
+    error_log('namespace: ' . $phpProperty->namespace);
+    error_log('typeNamespace: ' . $phpProperty->typeNamespace);
+    error_log('phpType: ' . $phpProperty->phpType);
+    error_log('simpleType: ' . ($phpProperty->simpleType ? 'TRUE' : 'FALSE'));
+    
     $docs = $xPath->query('docs/doc', $property);
     foreach ($docs as $doc) {
       $phpProperty->info->{$doc->getAttribute('name')} = $doc->nodeValue;
@@ -246,7 +259,7 @@ class PHPPropertyHv extends PHPCommonHv {
     }
     $ntype = $this->parent->normalizeType($type);
 
-    if ($this->simpleType || $type!=$ntype) {
+    if ($this->simpleType /*|| $type!=$ntype*/) {
       // continue to end...
     }
     else {
