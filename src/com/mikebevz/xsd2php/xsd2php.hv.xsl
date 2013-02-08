@@ -126,7 +126,20 @@
 								type="{$type}" namespace="{@namespace}" dummyProperty="true">
 								<property debug="Dummy-Property-2" xmlType="element"
 									name="value" type="{$type}" namespace="#default#"
-									typeNamespace="#default#">
+									>
+									<xsl:attribute name="typeNamespace">
+										<xsl:choose>
+											<xsl:when test="/*[local-name()='schema']">
+												<xsl:for-each select="/*[local-name()='schema']">
+													<xsl:value-of select="namespace-uri()" />
+												</xsl:for-each>
+											</xsl:when>
+											<xsl:otherwise>
+												<xsl:text>#default#</xsl:text>
+											</xsl:otherwise>
+										</xsl:choose>
+									</xsl:attribute>
+								
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
