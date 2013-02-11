@@ -45,14 +45,6 @@ class PHPPropertyHv extends PHPCommonHv {
         $phpProperty->phpType = $phpProperty->type;
     }
     
-    error_log('>>>>>>>> ' . $myClass->name);
-    error_log('phpName: ' . $phpProperty->phpName);
-    error_log('name: ' . $phpProperty->name);
-    error_log('namespace: ' . $phpProperty->namespace);
-    error_log('typeNamespace: ' . $phpProperty->typeNamespace);
-    error_log('phpType: ' . $phpProperty->phpType);
-    error_log('simpleType: ' . ($phpProperty->simpleType ? 'TRUE' : 'FALSE'));
-    
     $docs = $xPath->query('docs/doc', $property);
     foreach ($docs as $doc) {
       $phpProperty->info->{$doc->getAttribute('name')} = $doc->nodeValue;
