@@ -318,8 +318,21 @@
 							<xsl:otherwise>
 								<property debug="nameElement-TypeColonNoNamespace"
 									xmlType="element" name="{@name}" type="{substring-after(@type, ':')}"
-									minOccurs="{@minOccurs}"
-									typeNamespace="{substring-before(@type, ':')}" maxOccurs="{@maxOccurs}">
+									minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+									
+									<xsl:variable name="typeNamespace" select="substring-before(@type, ':')" />
+									<xsl:attribute name="typeNamespace">
+										<xsl:choose>
+											<xsl:when test="namespace::*[name()=$typeNamespace]">
+												<xsl:for-each select="namespace::*[name()=$typeNamespace]">
+													<xsl:value-of select="." />
+												</xsl:for-each>
+											</xsl:when>
+											<xsl:otherwise>
+												<xsl:value-of select="$typeNamespace" />
+											</xsl:otherwise>
+										</xsl:choose>
+									</xsl:attribute>
 
 									<xsl:attribute name="namespace">
 										<xsl:variable name="type" select="substring-after(@type, ':')" />
@@ -414,9 +427,18 @@
 					<xsl:variable name="type" select="substring-after(@base,':')" />
 					<xsl:variable name="nspace" select="substring-before(@base,':')" />
 					<xsl:attribute name="namespace">
-						<xsl:for-each select="//*[@name=$type]/ancestor-or-self::*/@*[name()=concat('xmlns:', $nspace)]">
-							<xsl:value-of select="." />
-						</xsl:for-each>
+						<xsl:choose>
+							<xsl:when test="namespace::*[name()=$nspace]">
+								<xsl:for-each select="namespace::*[name()=$nspace]">
+									<xsl:value-of select="." />
+								</xsl:for-each>
+							</xsl:when>
+							<xsl:otherwise>
+								<xsl:for-each select="//*[@name=$type][@namespace][1]">
+									<xsl:value-of select="@namespace" />
+								</xsl:for-each>
+							</xsl:otherwise>
+						</xsl:choose>
 					</xsl:attribute>
 				</extends>
 			</xsl:when>
