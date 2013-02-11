@@ -563,11 +563,24 @@
 					<xsl:when test="contains(@type, ':')">
 						<property debug="attribute-TypeNs" xmlType="attribute"
 							name="{@name}" type="{substring-after(@type, ':')}"
-							typeNamespace="{substring-before(@type, ':')}" default="{@default}"
-							use="{@use}">
+							default="{@default}" use="{@use}">
 							
 							<xsl:variable name="type" select="substring-after(@type, ':')" />
 							<xsl:variable name="lowertype" select="translate($type, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnoqrstuvwxyz')" />
+							<xsl:variable name="typeNamespace" select="substring-before(@type, ':')" />
+
+							<xsl:attribute name="typeNamespace">
+								<xsl:choose>
+									<xsl:when test="namespace::*[name()=$typeNamespace]">
+										<xsl:for-each select="namespace::*[name()=$typeNamespace]">
+											<xsl:value-of select="." />
+										</xsl:for-each>
+									</xsl:when>
+									<xsl:otherwise>
+										<xsl:value-of select="$typeNamespace" />
+									</xsl:otherwise>
+								</xsl:choose>
+							</xsl:attribute>
 							
 							<xsl:if test="//*[@name=$type or @name=$lowertype][@namespace]">
 								<xsl:attribute name="namespace">
