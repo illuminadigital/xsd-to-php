@@ -41,6 +41,8 @@ class PHPClassHv extends PHPCommonHv {
     	$phpClass->constants[] = array('name' => 'NAME', 'value' => "'" . $class->getAttribute('refName') . "'"); 
     }
     
+    $phpClass->info->dummyProperty = $class->getAttribute('dummyProperty');
+
     if ($extension = $class->getAttribute('extends')) {
       if (!$phpClass->parent->isBasicType($extension) && strpos($extension, ':') !== FALSE) {
         list($ns, $extension) = explode(':', $extension);
@@ -93,11 +95,14 @@ class PHPClassHv extends PHPCommonHv {
         
         $propertyDoc->appendChild($propertyEl); 
 
+        $dummyProperty = $phpClass->dummyProperty;
+        $phpClass->info->dummyProperty = 'true';
+        
         $phpClass->classProperties['value'] = PHPPropertyHv::factory($phpClass, $propertyDoc, $propertyEl);
+        
+        $phpClass->info->dummyProperty = $dummyProperty;
       }
     }
-
-    $phpClass->info->dummyProperty = $class->getAttribute('dummyProperty');
 
     $phpClass->info->xmlNamespace = $phpClass->parent->expandNS($phpClass->namespace);
     $phpClass->info->xmlType      = $phpClass->type;
