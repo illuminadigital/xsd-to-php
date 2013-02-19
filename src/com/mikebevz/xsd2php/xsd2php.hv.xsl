@@ -540,7 +540,7 @@
 					</xsl:when>
 					<xsl:otherwise>
 						<!-- Not sure about namespace here... -->
-						<extends debug="Extends4" name="{@base}" namespace="{@base}" />
+						<extends debug="Extends4" name="{@base}" namespace="{namespace-uri()}" />
 						<xsl:apply-templates />
 					</xsl:otherwise>
 				</xsl:choose>

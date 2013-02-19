@@ -63,6 +63,37 @@ class PHPClassHv extends PHPCommonHv {
       if (!$phpClass->parent->isBasicType($name)) {
         $phpClass->extends = $phpClass->type = $name;
         $phpClass->extendsNamespace = $phpClass->parent->namespaceToPhp($class->getElementsByTagName('extends')->item(0)->getAttribute('namespace'));
+      } else {
+        // Basic types don't actually extend from anything so we treat it as a value property.
+        
+        $propertyNamespace = $class->getElementsByTagName('extends')->item(0)->getAttribute('namespace');
+        // Build a fake document fragment and use this to create the missing property  
+        $propertyDoc = new \DOMDocument('1.0');
+        //$propertyDoc->registerNamespace('', $propertyNamespace);
+        $propertyEl = $propertyDoc->createElement('property');
+
+        $propertyAttrs = array(
+            'xmlns' => $propertyNamespace,
+            'xmlType' => 'value',
+            'name' => 'value',
+            'type' => $name,
+            'minOccurs' => 1,
+            'maxOccurs' => 1,
+            'typeNamespace' => $propertyNamespace,
+            'namespace' => $propertyNamespace,
+        );
+        
+        foreach ($propertyAttrs as $attrName => $attrValue)
+        {
+            $attrNode = $propertyDoc->createAttribute($attrName);
+            $attrNode->value = $attrValue;
+
+            $propertyEl->appendChild($attrNode);
+        }
+        
+        $propertyDoc->appendChild($propertyEl); 
+
+        $phpClass->classProperties['value'] = PHPPropertyHv::factory($phpClass, $propertyDoc, $propertyEl);
       }
     }
 
