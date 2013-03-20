@@ -217,6 +217,29 @@
 	<!-- element -->
 	<xsl:template
 		match="*[local-name()='element' and namespace-uri()='http://www.w3.org/2001/XMLSchema']">
+		
+		<xsl:variable name="minOccurs">
+			<xsl:choose>
+				<xsl:when test="parent::*[local-name()='choice']">
+					<xsl:value-of select="parent::*[local-name()='choice']/@minOccurs" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="@minOccurs" />
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+		
+		<xsl:variable name="maxOccurs">
+			<xsl:choose>
+				<xsl:when test="parent::*[local-name()='choice']">
+					<xsl:value-of select="parent::*[local-name()='choice']/@maxOccurs" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="@maxOccurs" />
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+		
 		<xsl:choose>
 			<xsl:when test="contains(@ref,':')">
 				<xsl:variable name="type" select="substring-after(@ref,':')" />
@@ -237,8 +260,8 @@
 				
 				<property debug="refElement" xmlType="element"
 					name="{$type}" type="{$type}"
-					namespace="{$nspace}" minOccurs="{@minOccurs}"
-					maxOccurs="{@maxOccurs}">
+					namespace="{$nspace}" minOccurs="{$minOccurs}"
+					maxOccurs="{$maxOccurs}">
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
@@ -251,8 +274,8 @@
 				<xsl:choose>
 					<xsl:when test="../../@namespace">
 						<property debug="refElement-ParentNS" xmlType="element"
-							name="{@ref}" type="{@ref}" minOccurs="{@minOccurs}" namespace="{../../@namespace}"
-							maxOccurs="{@maxOccurs}">
+							name="{@ref}" type="{@ref}" minOccurs="{$minOccurs}" namespace="{../../@namespace}"
+							maxOccurs="{$maxOccurs}">
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
@@ -263,7 +286,7 @@
 					</xsl:when>
 					<xsl:otherwise>
 						<property debug="refElement-NoNS" xmlType="element" name="{@ref}"
-							type="{@ref}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+							type="{@ref}" minOccurs="{$minOccurs}" maxOccurs="{$maxOccurs}">
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
@@ -281,8 +304,8 @@
 							<xsl:when test="../../@namespace">
 								<property debug="nameElement-TypeColonNamespace"
 									xmlType="element" name="{@name}" type="{substring-after(@type, ':')}"
-									minOccurs="{@minOccurs}"
-									typeNamespace="{substring-before(@type, ':')}" maxOccurs="{@maxOccurs}">
+									minOccurs="{$minOccurs}"
+									typeNamespace="{substring-before(@type, ':')}" maxOccurs="{$maxOccurs}">
 								
 									<xsl:variable name="type" select="substring-after(@type, ':')" />
 									<xsl:variable name="lowertype" select="translate($type, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnoqrstuvwxyz')" />
@@ -318,7 +341,7 @@
 							<xsl:otherwise>
 								<property debug="nameElement-TypeColonNoNamespace"
 									xmlType="element" name="{@name}" type="{substring-after(@type, ':')}"
-									minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+									minOccurs="{$minOccurs}" maxOccurs="{$maxOccurs}">
 									
 									<xsl:variable name="typeNamespace" select="substring-before(@type, ':')" />
 									<xsl:attribute name="typeNamespace">
@@ -366,7 +389,7 @@
 					<xsl:when test="@type">
 						<property debug="nameElement-TypeNoColon" xmlType="element"
 							name="{@name}" type="{@type}"
-							typeNamespace="#default#" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+							typeNamespace="#default#" minOccurs="{$minOccurs}" maxOccurs="{$maxOccurs}">
 								<xsl:attribute name="namespace">
 									<xsl:choose>
 										<xsl:when test="/*[local-name()='schema']">
@@ -391,7 +414,7 @@
 					<xsl:otherwise>
 						<property debug="nameElement-NoType" xmlType="element"
 							name="{@name}" type="{@name}" namespace="#default#"
-							typeNamespace="#default#" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+							typeNamespace="#default#" minOccurs="{$minOccurs}" maxOccurs="{$maxOccurs}">
 								<xsl:apply-templates
 									select="*[local-name()='restriction' and
 					namespace-uri()='http://www.w3.org/2001/XMLSchema']" />
