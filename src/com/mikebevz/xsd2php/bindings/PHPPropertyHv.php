@@ -545,11 +545,44 @@ class PHPPropertyHv extends PHPCommonHv {
       } else if ($phpType == 'AnyMixed') {
         $phpType = 'object';
       }
-      return array(
-        $this->minOccurs == 0 ? "{$indent}if ( ! is_{$phpType}({$varName}) && ! is_null({$varName}) ) {" : "{$indent}if (!is_{$phpType}({$varName})) {",
-        "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
-        "{$indent}}",
-      );
+      
+      switch ($phpType) {
+          case 'int':
+          case 'integer':
+          case 'float':
+              // Treat the numeric types differently as we need to handle the string case
+              
+              $checks = array(
+                  "{$indent}\$isValid = FALSE;",
+                  "{$indent}if ( is_{$phpType}({$varName}) ) {",
+                  "{$indent2}\$isValid = TRUE;",
+                  "{$indent}}",
+              );
+
+              if ($this->minOccurs == 0) {
+                  $checks[] = "{$indent}else if ( is_null({$varName}) ) {";
+                  $checks[] = "{$indent2}\$isValid = TRUE;";
+                  $checks[] = "{$indent}}";
+              }
+              
+              $checks[] = "{$indent}else if ( {$varName} == (\$castVar = ({$phpType}) {$varName}) ) {";
+              $checks[] = "{$indent2}\$isValid = TRUE;";
+              $checks[] = "{$indent2}{$varName} = \$castVar;";
+              $checks[] = "{$indent}}";
+
+              $checks[] = "{$indent}if ( ! \$isValid ) {";
+              $checks[] = "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));";
+              $checks[] = "{$indent}}";            
+
+              return $checks;
+              
+          default:
+              return array(
+                $this->minOccurs == 0 ? "{$indent}if ( ! is_{$phpType}({$varName}) && ! is_null({$varName}) ) {" : "{$indent}if (!is_{$phpType}({$varName})) {",
+                "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
+                "{$indent}}",
+              );
+      }
     }
     return array();
   }
