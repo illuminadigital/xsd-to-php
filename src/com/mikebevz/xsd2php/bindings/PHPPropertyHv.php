@@ -306,8 +306,8 @@ class PHPPropertyHv extends PHPCommonHv {
     $buffer->line('');
 
     $buffer->lines(array(
-      "public function get{$this->ucPhpName}() {",
-      "{$indent}if (\$this->{$this->phpName}===NULL) {",
+      "public function get{$this->ucPhpName}(\$autoCreate = TRUE) {",
+      "{$indent}if (\$this->{$this->phpName}===NULL && \$autoCreate && ! isset(\$this->_overrides['{$this->phpName}']) ) {",
       "{$indent2}\$this->{$this->phpName} = \$this->create{$this->ucPhpName}();",
       "{$indent}}",
       "{$indent}return \$this->{$this->phpName};",
@@ -438,6 +438,16 @@ class PHPPropertyHv extends PHPCommonHv {
 
     if ($typeHint)
     {
+       if ($this->minOccurs == 0) {
+           $buffer->lines(array(
+               "{$indent2}if ( {$this->varName} === FALSE ) {",
+               "{$indent2}{$indent}\$this->_overrides['{$this->phpName}'] = TRUE;",
+               "{$indent2}{$indent}return NULL;",
+               "{$indent2}}",
+               '',
+           ));
+       }
+       
        if ($this->maxOccurs == 1) {
         	$buffer->lines(array(
         		$this->minOccurs == 0 ? "{$indent2}if ( ! {$this->varName} instanceof {$typeHint} && ! is_null({$this->varName}) ) {" : "{$indent2}if ( ! {$this->varName} instanceof {$typeHint}) {",
@@ -451,6 +461,13 @@ class PHPPropertyHv extends PHPCommonHv {
                 "{$indent2}{$indent}{$this->varName} = array({$this->varName});",
                 "{$indent2}}",
             ));
+       }
+       
+       if ($this->minOccurs == 0) {
+           $buffer->lines(array(
+               '',
+               "{$indent2}unset (\$this->_overrides['{$this->phpName}']);",
+           ));
        }
     } 
     

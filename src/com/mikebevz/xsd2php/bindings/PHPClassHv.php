@@ -305,6 +305,16 @@ class PHPClassHv extends PHPCommonHv {
       $property->enumeration($this->buffer);
     }
 
+    $this->buffer->lines(array(
+        "",
+        "\t/**",
+        "\t * List of manually overridden properties that should not be re-generated automatically",
+        "\t * @var array",
+        "\t */",
+        "\tprotected \$_overrides = array();",
+        "",
+    ));
+    
     // Output all the property declarations
     foreach ($this->classProperties as $property) {
       $property->declaration($this->buffer);
