@@ -220,7 +220,10 @@
 		
 		<xsl:variable name="minOccurs">
 			<xsl:choose>
-				<xsl:when test="parent::*[local-name()='choice']">
+				<xsl:when test="parent::*[local-name()='choice']/@minOccurs and @minOccurs and parent::*[local-name()='choice']/@minOccurs &lt; @minOccurs">
+					<xsl:value-of select="parent::*[local-name()='choice']/@minOccurs" />
+				</xsl:when>
+				<xsl:when test="parent::*[local-name()='choice']/@minOccurs and not(@minOccurs)">
 					<xsl:value-of select="parent::*[local-name()='choice']/@minOccurs" />
 				</xsl:when>
 				<xsl:otherwise>
@@ -231,7 +234,10 @@
 		
 		<xsl:variable name="maxOccurs">
 			<xsl:choose>
-				<xsl:when test="parent::*[local-name()='choice']">
+				<xsl:when test="parent::*[local-name()='choice']/@maxOccurs and @maxOccurs and parent::*[local-name()='choice']/@maxOccurs &gt; @maxOccurs">
+					<xsl:value-of select="parent::*[local-name()='choice']/@maxOccurs" />
+				</xsl:when>
+				<xsl:when test="parent::*[local-name()='choice']/@maxOccurs and not(@maxOccurs)">
 					<xsl:value-of select="parent::*[local-name()='choice']/@maxOccurs" />
 				</xsl:when>
 				<xsl:otherwise>
