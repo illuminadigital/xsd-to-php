@@ -641,20 +641,30 @@ class PHPPropertyHv extends PHPCommonHv {
       ));
     }
 
+    if ($this->minOccurs < 1) {
+        $output[] = "{$indent}if ( ! empty({$this->varName}) ) {";
+        $indentLevel = $indent2;
+    } else {
+        $indentLevel = $indent;
+    }
+    
     // Check types of every item
     $typeHint = $this->buildTypeHint(FALSE);
     if ($typeHint) {
-      $output[] = "{$indent}foreach ({$this->varName} as \$entry) {";
-      $output = array_merge($output, $this->buildObjectTypeCheck($this->type, $indent2, '$entry'));
-      $output[] = "{$indent}}";
+      $output[] = "{$indentLevel}foreach ({$this->varName} as \$entry) {";
+      $output = array_merge($output, $this->buildObjectTypeCheck($this->type, $indentLevel . "\t", '$entry'));
+      $output[] = "{$indentLevel}}";
     }
     else {
-      $output[] = "{$indent}foreach ({$this->varName} as \$entry) {";
-      $output = array_merge($output, $this->buildPHPTypeCheck($this->type, $indent2, '$entry'));
-      $output[] = "{$indent}}";
+      $output[] = "{$indentLevel}foreach ({$this->varName} as \$entry) {";
+      $output = array_merge($output, $this->buildPHPTypeCheck($this->type, $indentLevel . "\t", '$entry'));
+      $output[] = "{$indentLevel}}";
     }
 
-
+    if ($this->minOccurs < 1) {
+        $output[] = "{$indent}}";
+    }
+    
     return $output;
   }
 }
