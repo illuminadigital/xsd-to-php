@@ -609,11 +609,13 @@ class PHPPropertyHv extends PHPCommonHv {
     if (!$varName) {
       $varName = $this->varName;
     }
+    
+    $typeHint = $this->buildTypeHint(FALSE);
 
     // Build the validation for simple php types
     if (!empty($this->parent->classMap[$type])) {
       return array(
-        "{$indent}if (!({$varName} instanceof {$this->parent->classMap[$type]})) {",
+        "{$indent}if (!({$varName} instanceof {$typeHint})) {",
         "{$indent2}throw new \\Exception(sprintf('Supplied %s value was not %s', '{$this->phpName}', '{$this->phpType}'));",
         "{$indent}}",
       );
