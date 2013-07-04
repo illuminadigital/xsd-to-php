@@ -560,9 +560,18 @@
 						<extends debug="Extends3" name="{substring-after(@base,':')}">
 							<xsl:attribute name="namespace">
 								<xsl:variable name="baseName" select="substring-after(@base, ':')" />
-								<xsl:for-each select="//*[@name=$baseName]">
-									<xsl:value-of select="@namespace" />
-								</xsl:for-each>
+								<xsl:choose>
+									<!-- If there is an entry in the same namespace as us, use it -->
+									<xsl:when test="//*[@name=$baseName and @namespace=$nspace]">
+										<xsl:value-of select="$nspace" />
+									</xsl:when>
+									<!-- otherwise use the first match -->
+									<xsl:otherwise>
+										<xsl:for-each select="//*[@name=$baseName][1]">
+											<xsl:value-of select="@namespace" />
+										</xsl:for-each>
+									</xsl:otherwise>
+								</xsl:choose>
 							</xsl:attribute>
 						</extends>
 						<xsl:apply-templates />
