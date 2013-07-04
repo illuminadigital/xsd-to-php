@@ -751,15 +751,21 @@
 								</xsl:otherwise>
 							</xsl:choose>
 						</xsl:when>
-						<xsl:when test="*[local-name='complexType']/@name=''">
+						<xsl:when test="*[local-name()='complexType']/@name=''">
 							<class debug="1.2" name="{@name}" namespace="{@namespace}">
 								<extends debug="1.0Extend" name="{@type}" />
 								<xsl:apply-templates />
 							</class>
 						</xsl:when>
-						<xsl:when test="*[local-name='simpleType']/@name=''">
+						<xsl:when test="*[local-name()='simpleType']/@name=''">
 							<xsl:variable name="baseType" select="current()/*[local-name()='restriction']/@base" />
 							<class debug="1.3" name="{@name}" extends="{$baseType}" namespace="{@namespace}">
+								<xsl:apply-templates />
+							</class>
+						</xsl:when>
+						<xsl:when test="@name and *[local-name()='simpleType']">
+							<xsl:variable name="baseType" select="current()/*[local-name()='restriction']/@base" />
+							<class debug="1.5" name="{@name}" extends="{$baseType}" namespace="{@namespace}">
 								<xsl:apply-templates />
 							</class>
 						</xsl:when>
